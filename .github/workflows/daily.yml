@@ -19,13 +19,13 @@ permissions:
 env:
   JOB_NAME: run-${{ github.run_id }}
   MODE: ${{ github.event.inputs.mode || 'full' }}
-  GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-  GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-  ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-  ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
-  ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID }}
-  HF_TOKEN: ${{ secrets.HF_TOKEN }}
-  VOICE_KEY: ${{ secrets.VOICE_KEY }}
+  GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY || vars.GEMINI_API_KEY }}
+  GROQ_API_KEY: ${{ secrets.GROQ_API_KEY || vars.GROQ_API_KEY }}
+  ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY || vars.ANTHROPIC_API_KEY }}
+  ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY || vars.ELEVENLABS_API_KEY }}
+  ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID || vars.ELEVENLABS_VOICE_ID }}
+  HF_TOKEN: ${{ secrets.HF_TOKEN || vars.HF_TOKEN }}
+  VOICE_KEY: ${{ secrets.VOICE_KEY || vars.VOICE_KEY }}
 
 jobs:
   # ---------------------------------------------------------------- 1. write
@@ -59,23 +59,23 @@ jobs:
         lang: [en, es]
     env:
       LANG_CODE: ${{ matrix.lang }}
-      PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
-      PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
-      YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
-      YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
-      YT_REFRESH_TOKEN_EN: ${{ secrets.YT_REFRESH_TOKEN_EN }}
-      YT_REFRESH_TOKEN_ES: ${{ secrets.YT_REFRESH_TOKEN_ES }}
-      TIKTOK_CLIENT_KEY: ${{ secrets.TIKTOK_CLIENT_KEY }}
-      TIKTOK_CLIENT_SECRET: ${{ secrets.TIKTOK_CLIENT_SECRET }}
-      TIKTOK_REFRESH_TOKEN_EN: ${{ secrets.TIKTOK_REFRESH_TOKEN_EN }}
-      TIKTOK_REFRESH_TOKEN_ES: ${{ secrets.TIKTOK_REFRESH_TOKEN_ES }}
+      PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY || vars.PEXELS_API_KEY }}
+      PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY || vars.PIXABAY_API_KEY }}
+      YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID || vars.YT_CLIENT_ID }}
+      YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET || vars.YT_CLIENT_SECRET }}
+      YT_REFRESH_TOKEN_EN: ${{ secrets.YT_REFRESH_TOKEN_EN || vars.YT_REFRESH_TOKEN_EN }}
+      YT_REFRESH_TOKEN_ES: ${{ secrets.YT_REFRESH_TOKEN_ES || vars.YT_REFRESH_TOKEN_ES }}
+      TIKTOK_CLIENT_KEY: ${{ secrets.TIKTOK_CLIENT_KEY || vars.TIKTOK_CLIENT_KEY }}
+      TIKTOK_CLIENT_SECRET: ${{ secrets.TIKTOK_CLIENT_SECRET || vars.TIKTOK_CLIENT_SECRET }}
+      TIKTOK_REFRESH_TOKEN_EN: ${{ secrets.TIKTOK_REFRESH_TOKEN_EN || vars.TIKTOK_REFRESH_TOKEN_EN }}
+      TIKTOK_REFRESH_TOKEN_ES: ${{ secrets.TIKTOK_REFRESH_TOKEN_ES || vars.TIKTOK_REFRESH_TOKEN_ES }}
       TIKTOK_PRIVACY: ${{ vars.TIKTOK_PRIVACY }}
-      META_TOKEN_EN: ${{ secrets.META_TOKEN_EN }}
-      META_TOKEN_ES: ${{ secrets.META_TOKEN_ES }}
-      IG_USER_ID_EN: ${{ secrets.IG_USER_ID_EN }}
-      IG_USER_ID_ES: ${{ secrets.IG_USER_ID_ES }}
-      FB_PAGE_ID_EN: ${{ secrets.FB_PAGE_ID_EN }}
-      FB_PAGE_ID_ES: ${{ secrets.FB_PAGE_ID_ES }}
+      META_TOKEN_EN: ${{ secrets.META_TOKEN_EN || vars.META_TOKEN_EN }}
+      META_TOKEN_ES: ${{ secrets.META_TOKEN_ES || vars.META_TOKEN_ES }}
+      IG_USER_ID_EN: ${{ secrets.IG_USER_ID_EN || vars.IG_USER_ID_EN }}
+      IG_USER_ID_ES: ${{ secrets.IG_USER_ID_ES || vars.IG_USER_ID_ES }}
+      FB_PAGE_ID_EN: ${{ secrets.FB_PAGE_ID_EN || vars.FB_PAGE_ID_EN }}
+      FB_PAGE_ID_ES: ${{ secrets.FB_PAGE_ID_ES || vars.FB_PAGE_ID_ES }}
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
