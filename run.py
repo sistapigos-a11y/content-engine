@@ -12,6 +12,7 @@
 """
 import argparse
 import logging
+import os
 import time
 
 from engine import pipeline, tts
@@ -25,6 +26,11 @@ SAMPLES = {
 }
 
 if __name__ == "__main__":
+    # GitHub passes unset secrets as empty strings; libraries like huggingface_hub then
+    # send an empty "Bearer " token and fail, so treat empty as missing
+    for key in [k for k, v in os.environ.items() if v == ""]:
+        del os.environ[key]
+
     ap = argparse.ArgumentParser()
     ap.add_argument("--stage", choices=["all", "write", "produce", "finalize"], default="all")
     ap.add_argument("--job")
