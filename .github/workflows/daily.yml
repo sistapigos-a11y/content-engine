@@ -55,11 +55,19 @@ jobs:
           name: job
           path: work/${{ env.JOB_NAME }}/job.json
           retention-days: 7
+      - uses: actions/upload-artifact@v4
+        with:
+          name: scripts
+          path: work/${{ env.JOB_NAME }}/scripts/
+          retention-days: 30
+          if-no-files-found: ignore
 
   # ---------------------------------------------------------------- 2. voice (10 machines per language)
   # the cloned voice is slow on free CPUs, so the scenes are shared between 20 machines
+  # only runs when the repository variable VOICE is set to "on" (scripts-only by default)
   voice:
     needs: write
+    if: vars.VOICE == 'on'
     runs-on: ubuntu-24.04
     timeout-minutes: 340
     strategy:
@@ -86,7 +94,7 @@ jobs:
   # joins the voice parts (any scene a failed part missed is made here) and builds the package
   produce:
     needs: [write, voice]
-    if: always() && needs.write.result == 'success'
+    if: always() && needs.write.result == 'success' && vars.VOICE == 'on'
     runs-on: ubuntu-24.04
     timeout-minutes: 340
     strategy:
@@ -171,8 +179,8 @@ jobs:
         run: |
           git config user.name "content-bot"
           git config user.email "content-bot@users.noreply.github.com"
-          git add state/
-          git diff --cached --quiet || git commit -m "Update content history [skip ci]"
+          git add state/ output/
+          git diff --cached --quiet || git commit -m "New scripts + history [skip ci]"
           git pull --rebase && git push
 
   # ---------------------------------------------------------------- voice test

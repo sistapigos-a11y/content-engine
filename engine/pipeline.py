@@ -10,7 +10,7 @@ import datetime as dt
 import os
 from pathlib import Path
 
-from . import package, render, writer
+from . import export, package, render, writer
 from .llm import LLM
 from .uploaders import meta, tiktok, youtube
 from .util import ROOT, log, read_json, slugify, write_json
@@ -70,6 +70,7 @@ def write_stage(cfg: dict, name: str):
         job.stage(f"meta_{lang}", lambda: writer.write_metadata(llm, cfg, scripts[lang], idea, lang))
         if cfg["shorts"]["enabled"]:
             job.stage(f"shorts_{lang}", lambda: writer.write_shorts(llm, cfg, scripts[lang], lang))
+    export.export(job.data, WORK / name / "scripts")
     log.info("Writing stage done: %s", idea["topic"])
 
 
@@ -198,6 +199,7 @@ def finalize(cfg: dict, name: str):
     h["published"].append({"job": name, "topic": job["idea"]["topic"], "format": job["idea"]["format"],
                            "links": links})
     write_json(STATE, h)
+    export.export(job, ROOT / "output")  # kept in the repo, readable on github.com
     log.info("History updated: %s", links)
 
 
