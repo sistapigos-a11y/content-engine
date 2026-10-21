@@ -9,7 +9,7 @@ on:
         description: "full | no-publish | quick | voice-test"
         default: "full"
       script:
-        description: "Voice a ready script instead of writing one (e.g. output/adin-ross-the-truth.md)"
+        description: "Voice a ready script instead of writing one (e.g. output/adin-ross-the-truth.md, Spanish: ...-es.md)"
         default: ""
 
 concurrency:
@@ -44,7 +44,10 @@ jobs:
       - run: pip install -r requirements.txt
       - name: Pick topic, research, write scripts
         run: |
-          if [ -n "$SCRIPT" ]; then python run.py --stage import --job "$JOB_NAME" --script "$SCRIPT" --lang en
+          # scripts ending in -es.md are Spanish, everything else English
+          if [ -n "$SCRIPT" ]; then
+            case "$SCRIPT" in *-es.md) SLANG=es ;; *) SLANG=en ;; esac
+            python run.py --stage import --job "$JOB_NAME" --script "$SCRIPT" --lang "$SLANG"
           elif [ "$MODE" = "quick" ]; then python run.py --stage write --job "$JOB_NAME" --quick
           else python run.py --stage write --job "$JOB_NAME"; fi
       - uses: actions/upload-artifact@v4
