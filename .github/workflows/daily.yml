@@ -8,6 +8,9 @@ on:
       mode:
         description: "full | no-publish | quick | voice-test"
         default: "full"
+      script:
+        description: "Voice a ready script instead of writing one (e.g. output/adin-ross-the-truth.md)"
+        default: ""
 
 concurrency:
   group: content-engine
@@ -19,6 +22,7 @@ permissions:
 env:
   JOB_NAME: run-${{ github.run_id }}
   MODE: ${{ github.event.inputs.mode || 'full' }}
+  SCRIPT: ${{ github.event.inputs.script || '' }}
   GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY || vars.GEMINI_API_KEY }}
   GROQ_API_KEY: ${{ secrets.GROQ_API_KEY || vars.GROQ_API_KEY }}
   ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY || vars.ANTHROPIC_API_KEY }}
@@ -40,7 +44,8 @@ jobs:
       - run: pip install -r requirements.txt
       - name: Pick topic, research, write scripts
         run: |
-          if [ "$MODE" = "quick" ]; then python run.py --stage write --job "$JOB_NAME" --quick
+          if [ -n "$SCRIPT" ]; then python run.py --stage import --job "$JOB_NAME" --script "$SCRIPT" --lang en
+          elif [ "$MODE" = "quick" ]; then python run.py --stage write --job "$JOB_NAME" --quick
           else python run.py --stage write --job "$JOB_NAME"; fi
       - uses: actions/upload-artifact@v4
         with:

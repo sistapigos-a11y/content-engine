@@ -7,6 +7,7 @@
 
   # used by GitHub Actions to run languages in parallel
   python run.py --stage write    --job NAME
+  python run.py --stage import   --job NAME --script output/my-script.md --lang en
   python run.py --stage voice    --job NAME --lang es --part 3 --parts 10
   python run.py --stage produce  --job NAME --lang es
   python run.py --stage finalize --job NAME
@@ -16,7 +17,7 @@ import logging
 import os
 import time
 
-from engine import pipeline, tts
+from engine import importer, pipeline, tts
 from engine.util import ROOT, load_config, media_duration
 
 SAMPLES = {
@@ -33,9 +34,10 @@ if __name__ == "__main__":
         del os.environ[key]
 
     ap = argparse.ArgumentParser()
-    ap.add_argument("--stage", choices=["all", "write", "voice", "produce", "finalize"], default="all")
+    ap.add_argument("--stage", choices=["all", "write", "import", "voice", "produce", "finalize"], default="all")
     ap.add_argument("--job")
     ap.add_argument("--lang")
+    ap.add_argument("--script", help="Markdown script to voice (with --stage import)")
     ap.add_argument("--part", type=int, default=0)
     ap.add_argument("--parts", type=int, default=1)
     ap.add_argument("--no-publish", action="store_true")
@@ -74,6 +76,8 @@ if __name__ == "__main__":
             pipeline.run_all(cfg, publish=not args.no_publish)
         elif args.stage == "write":
             pipeline.write_stage(cfg, name)
+        elif args.stage == "import":
+            importer.import_script(ROOT / args.script, args.lang or "en", pipeline.WORK / name)
         elif args.stage == "voice":
             pipeline.voice_part(cfg, name, args.lang, args.part, args.parts)
         elif args.stage == "produce":
