@@ -1,4 +1,15 @@
 {
-  "topics": [],
-  "published": []
+  "topics": [
+    "The Prophecy of Lamine Yamal"
+  ],
+  "published": [
+    {
+      "job": "run-39639823352",
+      "topic": "The Prophecy of Lamine Yamal",
+      "format": "trending_person",
+      "links": {
+        "en": {}
+      }
+    }
+  ]
 }
