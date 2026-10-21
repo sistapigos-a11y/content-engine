@@ -22,6 +22,32 @@ SCENE_RULES = (
     "people, 35% broll, 15% text, 5% quote. Never 3 identical types in a row.")
 
 
+def _field(data, key: str):
+    """Models sometimes answer with the bare list instead of {"key": [...]}; accept both."""
+    if isinstance(data, dict):
+        if key in data:
+            return data[key]
+        lists = [v for v in data.values() if isinstance(v, list)]
+        if len(lists) == 1:
+            return lists[0]
+        raise KeyError(f"model answer has no '{key}': {list(data)}")
+    if isinstance(data, list) and len(data) == 1 and isinstance(data[0], dict) and key in data[0]:
+        return data[0][key]
+    return data
+
+
+def _obj(data) -> dict:
+    """Single-object answers sometimes come wrapped in a list."""
+    return data[0] if isinstance(data, list) and data and isinstance(data[0], dict) else data
+
+
+def _section(data, title: str) -> dict:
+    """A chapter as {"title", "scenes"}, whatever shape the model used."""
+    if isinstance(data, list):
+        return {"title": title, "scenes": _field(data, "scenes")}
+    return {"title": data.get("title") or title, "scenes": _field(data, "scenes")}
+
+
 def _system(cfg, fmt):
     ch = cfg["channel"]
     f = ch["formats"][fmt]
@@ -58,7 +84,8 @@ def pick_topic(llm: LLM, cfg: dict, history: list[str]) -> dict:
             f"Avoid repeating these past topics:\n{recent}\n\n"
             '{"ideas":[{"topic":str,"angle":str,"hook_title":str,"main_person":str,'
             '"secondary_person":str|null,"wikipedia_title":str,"why_now":str,"virality":1-10}]}',
-            _system(cfg, fmt))["ideas"]
+            _system(cfg, fmt))
+        idea = _field(idea, "ideas")
         idea.sort(key=lambda i: i.get("virality", 0), reverse=True)
         chosen = idea[0]
     else:
@@ -67,7 +94,8 @@ def pick_topic(llm: LLM, cfg: dict, history: list[str]) -> dict:
             f"English and Spanish markets. Avoid anything close to these past topics:\n{recent}\n\n"
             '{"ideas":[{"topic":str,"angle":str,"hook_title":str,"wikipedia_title":str,'
             '"main_person":str|null,"secondary_person":str|null,"virality":1-10,"fact_density":1-10}]}',
-            _system(cfg, fmt))["ideas"]
+            _system(cfg, fmt))
+        ideas = _field(ideas, "ideas")
         ideas.sort(key=lambda i: i.get("virality", 0) + i.get("fact_density", 0), reverse=True)
         chosen = ideas[0]
     chosen["format"] = fmt
@@ -98,6 +126,7 @@ def write_long_script(llm: LLM, cfg: dict, idea: dict, research: str) -> dict:
         "Each chapter ends on a question or reveal that pulls into the next. The last chapter pays off "
         "the title's promise and leaves a lingering thought.\n"
         '{"chapters":[{"title":str,"beats":[str],"ends_with":str}]}', sys)
+    outline = {"chapters": _field(outline, "chapters")}
 
     sections, story_so_far = [], ""
     for i, ch in enumerate(outline["chapters"], 1):
@@ -108,6 +137,7 @@ def write_long_script(llm: LLM, cfg: dict, idea: dict, research: str) -> dict:
             f"Write chapter {i}: '{ch['title']}' covering {ch['beats']} and ending with: {ch['ends_with']}.\n"
             f"About {words_per_section} words of narration.\n{SCENE_RULES}\n"
             f'{{"scenes":[{SCENE_SCHEMA}]}}', sys)
+        sec = _section(sec, ch["title"])
         sections.append({"title": ch["title"], "scenes": sec["scenes"]})
         story_so_far += " ".join(s["narration"] for s in sec["scenes"])
 
@@ -117,23 +147,23 @@ def write_long_script(llm: LLM, cfg: dict, idea: dict, research: str) -> dict:
 def review_script(llm: LLM, cfg: dict, script: dict, research: str) -> dict:
     text = "\n\n".join(f"## {s['title']}\n" + " ".join(x["narration"] for x in s["scenes"])
                        for s in script["sections"])
-    return llm.json(
+    return _obj(llm.json(
         "Act as a strict YouTube documentary editor AND fact-checker. Score 1-10 on: hook strength, "
         "retention/pacing, factual accuracy versus the research, originality (no generic AI filler). "
         "List claims that are not supported by the research.\n\n"
         f"RESEARCH:\n{research[:20000]}\n\nSCRIPT:\n{text[:50000]}\n\n"
-        '{"overall":number,"fixes":[str],"factual_risks":[str]}', _system(cfg, script["format"]))
+        '{"overall":number,"fixes":[str],"factual_risks":[str]}', _system(cfg, script["format"])))
 
 
 def improve_script(llm: LLM, cfg: dict, script: dict, review: dict) -> dict:
     notes = review.get("fixes", []) + [f"Unsupported claim, remove or soften: {r}" for r in review.get("factual_risks", [])]
     out = []
     for sec in script["sections"]:
-        out.append(llm.json(
+        out.append(_section(llm.json(
             f"Editor notes for the whole documentary: {notes}\n\nRewrite this chapter applying the notes "
             f"that concern it. Keep similar length and the same scene format.\n{SCENE_RULES}\n"
             f"{json.dumps(sec, ensure_ascii=False)}\n"
-            f'{{"title":str,"scenes":[{SCENE_SCHEMA}]}}', _system(cfg, script["format"])))
+            f'{{"title":str,"scenes":[{SCENE_SCHEMA}]}}', _system(cfg, script["format"])), sec["title"]))
     return {**script, "sections": out}
 
 
@@ -141,13 +171,13 @@ def adapt_to_spanish(llm: LLM, cfg: dict, script: dict) -> dict:
     """Meaning-based adaptation (not word-for-word) for a native Spanish voiceover."""
     out = []
     for sec in script["sections"]:
-        out.append(llm.json(
+        out.append(_section(llm.json(
             "Adapt this documentary chapter into natural, neutral Latin-American Spanish for voiceover. "
             "Translate meaning, rhythm and suspense, not words. Keep names, dates and numbers exact. "
             "Translate 'narration', 'title' and 'onscreen' (quotes: use the established Spanish version or "
             "translate faithfully). Keep 'type', 'query' and 'person' unchanged.\n"
             f"{json.dumps(sec, ensure_ascii=False)}\n"
-            f'{{"title":str,"scenes":[{SCENE_SCHEMA}]}}', _system(cfg, script["format"])))
+            f'{{"title":str,"scenes":[{SCENE_SCHEMA}]}}', _system(cfg, script["format"])), sec["title"]))
     return {**script, "sections": out}
 
 
@@ -155,7 +185,7 @@ def write_metadata(llm: LLM, cfg: dict, script: dict, idea: dict, lang: str) -> 
     language = {"en": "English", "es": "Spanish"}[lang]
     intro = " ".join(s["narration"] for s in script["sections"][0]["scenes"])[:2000]
     chapters = [s["title"] for s in script["sections"]]
-    return llm.json(
+    return _obj(llm.json(
         f"Write YouTube metadata in {language} for: {script['topic']} (working title: {idea.get('hook_title')}).\n"
         f"Opening: {intro}\nChapters: {chapters}\n"
         "Title: curiosity-driven like 'Xavi Warned Us 3 Years Ago' or 'IShowSpeed Was Right All Along', "
@@ -164,7 +194,7 @@ def write_metadata(llm: LLM, cfg: dict, script: dict, idea: dict, lang: str) -> 
         "(e.g. NOBODY / BELIEVED, THEY / LAUGHED, TOO / LATE), in "
         f"{language}, each max 9 letters.\n"
         '{"title":str,"description":str,"tags":[str],"thumb_left":str,"thumb_right":str}',
-        _system(cfg, script["format"]))
+        _system(cfg, script["format"])))
 
 
 def write_shorts(llm: LLM, cfg: dict, script: dict, lang: str) -> list[dict]:
@@ -179,4 +209,4 @@ def write_shorts(llm: LLM, cfg: dict, script: dict, lang: str) -> list[dict]:
         f"want the full story.\n{SCENE_RULES}\n\n{full}\n\n"
         f'{{"shorts":[{{"title":str,"caption":str,"hashtags":[str],"scenes":[{SCENE_SCHEMA}]}}]}}',
         _system(cfg, script["format"]))
-    return data["shorts"][: sc["per_video"]]
+    return _field(data, "shorts")[: sc["per_video"]]
