@@ -1,11 +1,20 @@
 {
   "topics": [
-    "The Prophecy of Lamine Yamal"
+    "The Prophecy of Lamine Yamal",
+    "Elizabeth Holmes"
   ],
   "published": [
     {
       "job": "run-39639823352",
       "topic": "The Prophecy of Lamine Yamal",
+      "format": "trending_person",
+      "links": {
+        "en": {}
+      }
+    },
+    {
+      "job": "run-39652284529",
+      "topic": "Elizabeth Holmes",
       "format": "trending_person",
       "links": {
         "en": {}
