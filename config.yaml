@@ -2,6 +2,10 @@
 #  إعدادات السيستام — بدّل هنا برك، ما تحتاجش تمس الكود
 # =============================================================
 
+# package = السيستام يكتب السكريبت ويصنع الصوت برك، والمونتاج والنشر تديرهم أنت في الـ PC
+# full    = كلش أوتوماتيكي (مونتاج Remotion + نشر)
+output: package
+
 channel:
   audience: "Curious viewers 16-40 who love football, internet culture and storytelling documentaries"
   tone: "cinematic, suspenseful, factual, confident narrator"

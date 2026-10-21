@@ -108,6 +108,7 @@ def _spread(shots: list[dict], frames: int) -> list[dict]:
 
 def _voiceover(scenes, lang, cfg, workdir: Path):
     """Per-scene audio -> one loudness-normalised track. Returns (voice.wav, words, bounds)."""
+    workdir.mkdir(parents=True, exist_ok=True)
     words, bounds, parts, t = [], [], [], 0.0
     for i, sc in enumerate(scenes):
         raw, ws = tts.synthesize(sc["narration"], lang, cfg, workdir / f"vo_{i:03}")

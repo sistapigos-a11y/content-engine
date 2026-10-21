@@ -10,7 +10,7 @@ import datetime as dt
 import os
 from pathlib import Path
 
-from . import render, writer
+from . import package, render, writer
 from .llm import LLM
 from .uploaders import meta, tiktok, youtube
 from .util import ROOT, log, read_json, slugify, write_json
@@ -81,8 +81,11 @@ def produce_stage(cfg: dict, name: str, lang: str, publish: bool = True):
         log.info("No %s script in this job, nothing to produce", lang)
         return
     res = Checkpoint(WORK / name / lang / "result.json")
-    idea, md, script = job["idea"], job[f"meta_{lang}"], job[f"script_{lang}"]
     base = WORK / name / lang
+    if cfg.get("output") == "package":  # script + voice only; editing happens on your PC
+        package.build(job, lang, cfg, base, res)
+        return
+    idea, md, script = job["idea"], job[f"meta_{lang}"], job[f"script_{lang}"]
     slug = slugify(idea["topic"])
     main_person = idea.get("main_person")
     p = cfg["publish"]
