@@ -4,6 +4,13 @@ import requests
 from .util import env, extract_json, log, retry
 
 
+def _ok(r: requests.Response) -> requests.Response:
+    """raise_for_status, but keep the provider's error message (it says what is wrong)."""
+    if r.status_code >= 400:
+        raise RuntimeError(f"HTTP {r.status_code}: {r.text[:500]}")
+    return r
+
+
 class LLM:
     def __init__(self, cfg: dict):
         c = cfg["llm"]
@@ -48,7 +55,7 @@ class LLM:
         r = requests.post(
             f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
             params={"key": key}, json=body, timeout=300)
-        r.raise_for_status()
+        _ok(r)
         parts = r.json()["candidates"][0]["content"]["parts"]
         return "".join(p.get("text", "") for p in parts)
 
@@ -61,7 +68,7 @@ class LLM:
             body["response_format"] = {"type": "json_object"}
         r = requests.post("https://api.groq.com/openai/v1/chat/completions",
                           headers={"Authorization": f"Bearer {key}"}, json=body, timeout=300)
-        r.raise_for_status()
+        _ok(r)
         return r.json()["choices"][0]["message"]["content"]
 
     def _anthropic(self, model, prompt, system, max_tokens, json_mode):
@@ -73,5 +80,5 @@ class LLM:
         r = requests.post("https://api.anthropic.com/v1/messages",
                           headers={"x-api-key": key, "anthropic-version": "2023-06-01"},
                           json=body, timeout=600)
-        r.raise_for_status()
+        _ok(r)
         return "".join(b.get("text", "") for b in r.json()["content"])

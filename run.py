@@ -66,11 +66,16 @@ if __name__ == "__main__":
         raise SystemExit
 
     name = args.job or pipeline.job_name()
-    if args.stage == "all":
-        pipeline.run_all(cfg, publish=not args.no_publish)
-    elif args.stage == "write":
-        pipeline.write_stage(cfg, name)
-    elif args.stage == "produce":
-        pipeline.produce_stage(cfg, name, args.lang, publish=not args.no_publish)
-    else:
-        pipeline.finalize(cfg, name)
+    try:
+        if args.stage == "all":
+            pipeline.run_all(cfg, publish=not args.no_publish)
+        elif args.stage == "write":
+            pipeline.write_stage(cfg, name)
+        elif args.stage == "produce":
+            pipeline.produce_stage(cfg, name, args.lang, publish=not args.no_publish)
+        else:
+            pipeline.finalize(cfg, name)
+    except Exception as e:
+        # shows up as an annotation on the run page, no need to dig through logs
+        print(f"::error::{args.stage} failed: {type(e).__name__}: {str(e)[-900:]}")
+        raise
