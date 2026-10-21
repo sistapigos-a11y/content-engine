@@ -3,3 +3,4 @@
 chatterbox-tts==0.1.7
 faster-whisper==1.2.1
 rembg[cpu]==2.0.69   # last version compatible with numpy<2 (required by chatterbox)
+noisereduce==3.0.3

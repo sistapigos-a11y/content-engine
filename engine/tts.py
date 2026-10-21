@@ -9,6 +9,7 @@ Every provider returns word timings [{word,start,end}] in seconds for captions.
 """
 import asyncio
 import base64
+import difflib
 import os
 import re
 from pathlib import Path
@@ -46,24 +47,65 @@ def voice_sample(lang: str) -> Path:
 _cb_model = None
 
 
-def _sentences(text: str, max_chars: int = 260) -> list[str]:
-    """Chatterbox is best with short inputs: split on sentences, then on commas if needed."""
-    out = []
-    for s in re.split(r"(?<=[.!?…])\s+", text.strip()):
-        while len(s) > max_chars:
-            cut = s.rfind(",", 0, max_chars)
-            cut = cut if cut > 40 else s.rfind(" ", 0, max_chars)
-            out.append(s[: cut + 1].strip())
-            s = s[cut + 1 :].strip()
-        if s:
-            out.append(s)
+def _chunks(text: str) -> list[str]:
+    """Group sentences into chunks of ~70-230 chars; a short tail is merged into the previous chunk."""
+    out, cur = [], ""
+    for s in re.split(r"(?<=[.!?])\s+", text.strip()):
+        if cur and len(cur) >= 70:
+            out.append(cur)
+            cur = s
+        elif cur and len(cur) + len(s) > 230:
+            out.append(cur)
+            cur = s
+        else:
+            cur = (cur + " " + s).strip()
+    if cur:
+        if out and len(cur) < 40:
+            out[-1] += " " + cur
+        else:
+            out.append(cur)
     return out
+
+
+def _match(expected: str, heard: str) -> float:
+    """How close the Whisper transcript is to the text we asked for (0..1)."""
+    norm = lambda t: re.sub(r"[^\w\s]", "", t.lower()).split()  # noqa: E731
+    return difflib.SequenceMatcher(None, norm(expected), norm(heard)).ratio()
+
+
+def _best_take(model, text: str, lang: str, v: dict):
+    """Generate up to N takes with different seeds; keep the one Whisper understands best.
+    Catches the mumbles, skipped words and strange noises Chatterbox sometimes produces."""
+    import librosa
+    import torch
+    from .align import transcribe
+
+    tries, good_enough = v.get("best_of", 5), v.get("min_match", 0.92)
+    best = (-1.0, None, 0)
+    for i in range(tries):
+        torch.manual_seed(3000 + i)
+        wav = model.generate(text, language_id=lang, exaggeration=v.get("exaggeration", 0.5),
+                             cfg_weight=v.get("cfg_weight", 0.5), temperature=v.get("temperature", 0.7)).cpu()
+        dur = wav.shape[-1] / model.sr
+        audio16 = librosa.resample(wav.squeeze(0).numpy(), orig_sr=model.sr, target_sr=16000)
+        score = _match(text, transcribe(audio16, lang))
+        # takes far longer than the text needs usually contain babbling or long silences
+        if dur > len(text) / 7 + 2:
+            score -= 0.3
+        if score > best[0]:
+            best = (score, wav, i + 1)
+        if score >= good_enough:
+            break
+    log.info("chunk ok: match %.2f after %d take(s)", best[0], best[2])
+    return best[1]
 
 
 def _chatterbox(text, lang, cfg, out: Path):
     global _cb_model
+    import noisereduce as nr
+    import numpy as np
+    import soundfile as sf
     import torch
-    import torchaudio
     from chatterbox.mtl_tts import ChatterboxMultilingualTTS
 
     if _cb_model is None:
@@ -77,14 +119,17 @@ def _chatterbox(text, lang, cfg, out: Path):
         _cb_model.prepare_conditionals(str(sample), exaggeration=v.get("exaggeration", 0.5))
         _cb_model.prepared_for = sample
 
-    pause = torch.zeros(1, int(_cb_model.sr * 0.18))
+    pause = np.zeros(int(_cb_model.sr * 0.18), dtype=np.float32)
     pieces = []
-    for sentence in _sentences(text):
-        wav = _cb_model.generate(sentence, language_id=lang, exaggeration=v.get("exaggeration", 0.5),
-                                 cfg_weight=v.get("cfg_weight", 0.5), temperature=v.get("temperature", 0.8))
-        pieces += [wav, pause]
+    for chunk in _chunks(text):
+        pieces += [_best_take(_cb_model, chunk, lang, v).squeeze(0).numpy(), pause]
+    raw = np.concatenate(pieces)
+
+    # gentle stationary denoise, then a fixed RMS level so every scene sounds the same
+    x = nr.reduce_noise(y=raw, sr=_cb_model.sr, stationary=True, prop_decrease=0.5)
+    x = np.clip(x / (np.sqrt(np.mean(x ** 2)) + 1e-9) * 0.08, -1.0, 1.0)
     path = out.with_suffix(".wav")
-    torchaudio.save(str(path), torch.cat(pieces, dim=1), _cb_model.sr)
+    sf.write(str(path), x.astype(np.float32), _cb_model.sr)
     from .align import word_timings
     return path, word_timings(path, lang)
 

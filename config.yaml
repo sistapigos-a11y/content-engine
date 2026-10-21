@@ -37,7 +37,9 @@ voice:
   fallback: "edge"
   exaggeration: 0.5    # 0.3 هادي ← 0.8 حماسي
   cfg_weight: 0.5      # أقل = أبطأ وأوضح
-  temperature: 0.8
+  temperature: 0.7
+  best_of: 5           # كل جملة تتولّد حتى 5 مرات، Whisper يسمعها ونخليو الأحسن
+  min_match: 0.92      # إذا التطابق مع النص وصل لهذا، نوقفو (ما نزيدوش محاولات)
   elevenlabs_model: "eleven_multilingual_v2"
   edge_voices:
     en: {voice: "en-US-AndrewMultilingualNeural", rate: "-5%"}
