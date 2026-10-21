@@ -94,13 +94,16 @@ def _chatterbox(text, lang, cfg, out: Path):
 def _elevenlabs(text, lang, cfg, out: Path):
     voice_id = env(f"ELEVENLABS_VOICE_ID_{lang.upper()}") or env("ELEVENLABS_VOICE_ID", required=True)
 
+    model = cfg["voice"].get("elevenlabs_model", "eleven_multilingual_v2")
+    body = {"text": text, "model_id": model,
+            "voice_settings": {"stability": 0.45, "similarity_boost": 0.85, "style": 0.3}}
+    if "turbo" in model or "flash" in model:  # only these models accept a forced language
+        body["language_code"] = lang
+
     def call():
         r = requests.post(f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}/with-timestamps",
                           headers={"xi-api-key": env("ELEVENLABS_API_KEY", required=True)},
-                          json={"text": text, "model_id": cfg["voice"].get("elevenlabs_model", "eleven_multilingual_v2"),
-                                "language_code": lang,
-                                "voice_settings": {"stability": 0.45, "similarity_boost": 0.85, "style": 0.3}},
-                          timeout=300)
+                          json=body, timeout=300)
         r.raise_for_status()
         return r.json()
 
