@@ -25,6 +25,7 @@ env:
   ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
   ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID }}
   HF_TOKEN: ${{ secrets.HF_TOKEN }}
+  VOICE_KEY: ${{ secrets.VOICE_KEY }}
 
 jobs:
   # ---------------------------------------------------------------- 1. write

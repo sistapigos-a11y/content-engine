@@ -28,6 +28,17 @@ runs:
         pip install -r requirements.txt
         pip install torch==2.6.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cpu
         pip install -r requirements-ai.txt
+    - name: Unlock voice sample
+      shell: bash
+      run: |
+        # the sample is stored encrypted so nobody can clone your voice from this public repo
+        if ls assets/voice/*.enc >/dev/null 2>&1 && [ -n "$VOICE_KEY" ]; then
+          for f in assets/voice/*.enc; do
+            openssl enc -d -aes-256-cbc -pbkdf2 -in "$f" -out "${f%.enc}" -pass env:VOICE_KEY
+          done
+        else
+          echo "::warning::No voice sample unlocked (add the VOICE_KEY secret) - falling back to the Edge voice"
+        fi
     - name: Remotion
       shell: bash
       working-directory: video

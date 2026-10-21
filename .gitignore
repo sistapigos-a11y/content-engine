@@ -4,3 +4,5 @@ __pycache__/
 .env
 video/node_modules/
 video/out/
+assets/voice/*.wav
+assets/voice/*.mp3
