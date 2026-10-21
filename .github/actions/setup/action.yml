@@ -25,9 +25,11 @@ runs:
     - name: Python packages
       shell: bash
       run: |
-        pip install -r requirements.txt
-        pip install torch==2.6.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cpu
-        pip install -r requirements-ai.txt
+        pip install uv
+        uv pip install --system -r requirements.txt
+        uv pip install --system torch==2.6.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cpu
+        uv pip install --system -r requirements-ai.txt
+        python -c "import torch, chatterbox, faster_whisper, rembg; print('AI packages OK, torch', torch.__version__)"
     - name: Unlock voice sample
       shell: bash
       run: |

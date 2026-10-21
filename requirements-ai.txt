@@ -2,4 +2,4 @@
 # Install torch CPU first:  pip install torch==2.6.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cpu
 chatterbox-tts==0.1.7
 faster-whisper==1.2.1
-rembg[cpu]==2.0.85
+rembg[cpu]==2.0.69   # last version compatible with numpy<2 (required by chatterbox)

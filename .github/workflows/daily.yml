@@ -31,7 +31,7 @@ jobs:
   # ---------------------------------------------------------------- 1. write
   write:
     if: github.event.inputs.mode != 'voice-test'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
@@ -51,7 +51,7 @@ jobs:
   # ---------------------------------------------------------------- 2. produce (EN + ES in parallel)
   produce:
     needs: write
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 340
     strategy:
       fail-fast: false
@@ -103,7 +103,7 @@ jobs:
   finalize:
     needs: [write, produce]
     if: always() && needs.write.result == 'success'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -129,7 +129,7 @@ jobs:
   # ---------------------------------------------------------------- voice test
   voice-test:
     if: github.event.inputs.mode == 'voice-test'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
