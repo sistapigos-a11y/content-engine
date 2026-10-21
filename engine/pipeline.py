@@ -135,6 +135,37 @@ def produce_stage(cfg: dict, name: str, lang: str, publish: bool = True):
     log.info("Produce stage done for %s", lang)
 
 
+def voice_part(cfg: dict, name: str, lang: str, part: int, parts: int):
+    """One slice of the voice work, so several GitHub machines can share it.
+    Scenes are split into `parts` contiguous groups of roughly equal length (characters)."""
+    job = read_json(WORK / name / "job.json")
+    if f"script_{lang}" not in job:
+        log.info("No %s script in this job", lang)
+        return
+    base = WORK / name / lang
+    units = []  # (scene, index, workdir)
+    if cfg["long_video"]["enabled"]:
+        scenes = [sc for sec in job[f"script_{lang}"]["sections"] for sc in sec["scenes"]]
+        units += [(sc, i, base / "long") for i, sc in enumerate(scenes)]
+    for k, short in enumerate(job.get(f"shorts_{lang}", [])):
+        units += [(sc, i, base / f"s{k}") for i, sc in enumerate(short["scenes"])]
+
+    total = sum(len(u[0]["narration"]) for u in units)
+    lo, hi = total * part / parts, total * (part + 1) / parts
+    mine, acc = [], 0
+    for u in units:
+        mid = acc + len(u[0]["narration"]) / 2  # a scene belongs to the slice holding its middle
+        if lo <= mid < hi:
+            mine.append(u)
+        acc += len(u[0]["narration"])
+    log.info("Voice part %d/%d (%s): %d of %d scenes", part + 1, parts, lang, len(mine), len(units))
+    # marker at the language folder: keeps long/ and sN/ paths intact inside the uploaded artifact
+    base.mkdir(parents=True, exist_ok=True)
+    (base / f"voice-part-{part}.txt").write_text(f"{len(mine)} scenes\n")
+    for sc, i, workdir in mine:
+        render.synth_scene(sc, i, lang, cfg, workdir)
+
+
 def _credits_block(credits: list[str], lang: str) -> str:
     head = "\n\nPhotos:" if lang == "en" else "\n\nFotos:"
     return head + "".join(f"\n• {c}" for c in credits[:15]) if credits else ""

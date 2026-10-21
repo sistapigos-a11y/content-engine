@@ -11,6 +11,7 @@ work/<job>/<lang>/package/
   scenes/NNN.wav        one file per scene, if you prefer to place them yourself
   shorts/short_N.*      same set for each Short (wav, srt, timeline, words, script)
 """
+import json
 import shutil
 from pathlib import Path
 
@@ -64,9 +65,8 @@ def _voice_set(scenes, lang, cfg, workdir: Path, dest: Path, chapters=None):
     write_json(dest / "words.json", words)
     (dest / "scenes").mkdir(exist_ok=True)
     for i in range(len(scenes)):
-        src = next(workdir.glob(f"vo_{i:03}.*"), None)
-        if src:
-            shutil.copy(src, dest / "scenes" / f"{i:03}{src.suffix}")
+        src = workdir / json.loads((workdir / f"vo_{i:03}.json").read_text())["audio"]
+        shutil.copy(src, dest / "scenes" / f"{i:03}{src.suffix}")
     return bounds[-1][1]
 
 

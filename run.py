@@ -7,6 +7,7 @@
 
   # used by GitHub Actions to run languages in parallel
   python run.py --stage write    --job NAME
+  python run.py --stage voice    --job NAME --lang es --part 3 --parts 10
   python run.py --stage produce  --job NAME --lang es
   python run.py --stage finalize --job NAME
 """
@@ -32,9 +33,11 @@ if __name__ == "__main__":
         del os.environ[key]
 
     ap = argparse.ArgumentParser()
-    ap.add_argument("--stage", choices=["all", "write", "produce", "finalize"], default="all")
+    ap.add_argument("--stage", choices=["all", "write", "voice", "produce", "finalize"], default="all")
     ap.add_argument("--job")
     ap.add_argument("--lang")
+    ap.add_argument("--part", type=int, default=0)
+    ap.add_argument("--parts", type=int, default=1)
     ap.add_argument("--no-publish", action="store_true")
     ap.add_argument("--quick", action="store_true")
     ap.add_argument("--voice-test", action="store_true")
@@ -71,6 +74,8 @@ if __name__ == "__main__":
             pipeline.run_all(cfg, publish=not args.no_publish)
         elif args.stage == "write":
             pipeline.write_stage(cfg, name)
+        elif args.stage == "voice":
+            pipeline.voice_part(cfg, name, args.lang, args.part, args.parts)
         elif args.stage == "produce":
             pipeline.produce_stage(cfg, name, args.lang, publish=not args.no_publish)
         else:

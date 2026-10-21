@@ -106,12 +106,25 @@ def _spread(shots: list[dict], frames: int) -> list[dict]:
     return shots
 
 
+def synth_scene(scene: dict, i: int, lang: str, cfg: dict, workdir: Path):
+    """Voice for one scene, saved as vo_NNN.<ext> + vo_NNN.json (words). Skips work already done,
+    so scenes made by parallel voice jobs are simply picked up."""
+    workdir.mkdir(parents=True, exist_ok=True)
+    meta = workdir / f"vo_{i:03}.json"
+    if meta.exists():
+        return
+    raw, ws = tts.synthesize(scene["narration"], lang, cfg, workdir / f"vo_{i:03}")
+    meta.write_text(json.dumps({"audio": raw.name, "words": ws}, ensure_ascii=False))
+
+
 def _voiceover(scenes, lang, cfg, workdir: Path):
     """Per-scene audio -> one loudness-normalised track. Returns (voice.wav, words, bounds)."""
     workdir.mkdir(parents=True, exist_ok=True)
     words, bounds, parts, t = [], [], [], 0.0
     for i, sc in enumerate(scenes):
-        raw, ws = tts.synthesize(sc["narration"], lang, cfg, workdir / f"vo_{i:03}")
+        synth_scene(sc, i, lang, cfg, workdir)
+        meta = json.loads((workdir / f"vo_{i:03}.json").read_text())
+        raw, ws = workdir / meta["audio"], meta["words"]
         dur = media_duration(raw) + 0.25  # a breath between scenes
         words += [{**w, "start": w["start"] + t, "end": w["end"] + t} for w in ws]
         bounds.append((t, t + dur))

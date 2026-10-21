@@ -48,9 +48,37 @@ jobs:
           path: work/${{ env.JOB_NAME }}/job.json
           retention-days: 7
 
-  # ---------------------------------------------------------------- 2. produce (EN + ES in parallel)
-  produce:
+  # ---------------------------------------------------------------- 2. voice (10 machines per language)
+  # the cloned voice is slow on free CPUs, so the scenes are shared between 20 machines
+  voice:
     needs: write
+    runs-on: ubuntu-24.04
+    timeout-minutes: 340
+    strategy:
+      fail-fast: false
+      matrix:
+        lang: [en, es]
+        part: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - uses: actions/download-artifact@v4
+        with: {name: job, path: "work/${{ env.JOB_NAME }}"}
+      - run: python run.py --stage voice --job "$JOB_NAME" --lang ${{ matrix.lang }} --part ${{ matrix.part }} --parts 10
+      - uses: actions/upload-artifact@v4
+        with:
+          name: voice-${{ matrix.lang }}-${{ matrix.part }}
+          path: |
+            work/${{ env.JOB_NAME }}/${{ matrix.lang }}/voice-part-*.txt
+            work/${{ env.JOB_NAME }}/${{ matrix.lang }}/**/vo_*
+          retention-days: 2
+          if-no-files-found: ignore
+
+  # ---------------------------------------------------------------- 3. produce (EN + ES in parallel)
+  # joins the voice parts (any scene a failed part missed is made here) and builds the package
+  produce:
+    needs: [write, voice]
+    if: always() && needs.write.result == 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 340
     strategy:
@@ -81,6 +109,12 @@ jobs:
       - uses: ./.github/actions/setup
       - uses: actions/download-artifact@v4
         with: {name: job, path: "work/${{ env.JOB_NAME }}"}
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: voice-${{ matrix.lang }}-*
+          merge-multiple: true
+          path: work/${{ env.JOB_NAME }}/${{ matrix.lang }}
       - name: Voice, visuals, Remotion render, publish
         run: |
           case "$MODE" in
@@ -106,7 +140,7 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
 
-  # ---------------------------------------------------------------- 3. history
+  # ---------------------------------------------------------------- 4. history
   finalize:
     needs: [write, produce]
     if: always() && needs.write.result == 'success'
