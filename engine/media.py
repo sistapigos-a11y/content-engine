@@ -1,10 +1,10 @@
-"""Royalty-free stock footage from Pexels / Pixabay, with a generated fallback."""
+"""Royalty-free stock footage from Pexels / Pixabay."""
 import hashlib
 from pathlib import Path
 
 import requests
 
-from .util import env, log, run
+from .util import env, log
 
 CACHE = Path("work/cache/media")
 
@@ -88,10 +88,3 @@ class MediaPicker:
                 log.warning("download failed: %s", e)
         return picked
 
-
-def fallback_clip(out: Path, w: int, h: int, seconds: float) -> Path:
-    """Slow dark gradient drift, used when no stock footage matches."""
-    run(["ffmpeg", "-y", "-f", "lavfi", "-i",
-         f"gradients=s={w}x{h}:c0=0x0b0f1a:c1=0x2a3550:speed=0.005:d={seconds:.2f}:r=30",
-         "-pix_fmt", "yuv420p", "-c:v", "libx264", "-preset", "veryfast", str(out)])
-    return out

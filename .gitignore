@@ -2,3 +2,5 @@ work/
 __pycache__/
 *.pyc
 .env
+video/node_modules/
+video/out/

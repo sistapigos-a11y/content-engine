@@ -3,22 +3,48 @@
 # =============================================================
 
 channel:
-  # موضوع القناة (النيش). كلما كان محدد أكثر، المحتوى يكون أحسن
-  niche: "Unsolved mysteries, forgotten history and strange true stories"
-  # الجمهور المستهدف والأسلوب
-  audience: "Curious adults 18-45 who love storytelling documentaries"
-  tone: "cinematic, suspenseful, factual, calm narrator voice"
+  audience: "Curious viewers 16-40 who love football, internet culture and storytelling documentaries"
+  tone: "cinematic, suspenseful, factual, confident narrator"
 
-# اللغات: كل لغة = نسخة كاملة (فيديو طويل + شورتس)
+  # أنواع المحتوى: كل يوم يختار واحد على حساب الـ weight (الاحتمال)
+  formats:
+    trending_person:
+      weight: 2   # 2 من 3 أيام: قصص شخصيات مشهورة حالياً
+      description: >
+        Story documentaries about people trending RIGHT NOW on social media: footballers,
+        athletes, streamers, YouTubers, rappers, influencers. Titles like 'Nobody Believed',
+        'X Warned Us 3 Years Ago', 'X Was Right All Along', 'The Rise of X'.
+    mystery:
+      weight: 1   # 1 من 3 أيام: النيش القديم
+      description: "Unsolved mysteries, forgotten history and strange true stories"
+
+  # منين يجيب "شكون رايح ترند اليوم"
+  trending:
+    wikipedia: ["en", "es"]               # أكثر الصفحات مشاهدة البارح
+    google_trends_geos: ["US", "GB", "MX", "ES", "AR"]
+
+# اللغات اللي يتنتج بيهم كل موضوع
 languages:
-  en:
-    voice: "en-US-AndrewMultilingualNeural"   # صوت مجاني من Microsoft Edge
-    rate: "-5%"
-  es:
-    voice: "es-MX-JorgeNeural"
-    rate: "-3%"
+  en: {}
+  es: {}
 
-# مزوّد الذكاء الاصطناعي للكتابة: gemini (مجاني) | groq (مجاني) | anthropic (مدفوع)
+# ---------------- الصوت (نسخة من صوتك) ----------------
+voice:
+  # chatterbox = مجاني، ينسخ صوتك من تسجيل 10-30 ثانية (assets/voice/me.wav)
+  # elevenlabs = مدفوع، أسرع وأطبع (يحتاج ELEVENLABS_API_KEY + ELEVENLABS_VOICE_ID)
+  # edge       = صوت مايكروسوفت مجاني (ماشي صوتك) — احتياط
+  provider: "chatterbox"
+  fallback: "edge"
+  exaggeration: 0.5    # 0.3 هادي ← 0.8 حماسي
+  cfg_weight: 0.5      # أقل = أبطأ وأوضح
+  temperature: 0.8
+  elevenlabs_model: "eleven_multilingual_v2"
+  edge_voices:
+    en: {voice: "en-US-AndrewMultilingualNeural", rate: "-5%"}
+    es: {voice: "es-MX-JorgeNeural", rate: "-3%"}
+
+# ---------------- الكتابة ----------------
+# gemini (مجاني) | groq (مجاني) | anthropic (مدفوع)
 llm:
   provider: "gemini"
   model: "gemini-2.5-flash"
@@ -27,37 +53,38 @@ llm:
 
 long_video:
   enabled: true
-  target_minutes: 20          # المدة المستهدفة
-  sections: 8                 # عدد الفصول (كل فصل ~ 2.5 دقيقة)
-  burn_subtitles: false       # الطويل: الترجمة تترفع كملف SRT (أحسن للـ SEO)
+  target_minutes: 20
+  sections: 8
+  burn_subtitles: false   # الطويل: الترجمة تترفع كملف SRT
 
 shorts:
   enabled: true
-  per_video: 3                # كم شورت يتولد من كل موضوع (لكل لغة)
+  per_video: 3
   max_seconds: 55
 
-# جودة: السكريبت يتقيّم أوتوماتيكياً، وإذا النقطة أقل من هذي يتعاود يتكتب
 quality:
   min_score: 7
   max_rewrites: 2
 
-media:
-  # مصادر الفيديوهات/الصور المجانية (حط المفاتيح في secrets)
-  sources: ["pexels", "pixabay"]
-  clip_max_seconds: 7         # كل لقطة ما تفوتش هاذ المدة (إيقاع المونتاج)
-  music_volume: 0.08          # حط ملفات mp3 بلا حقوق في assets/music
+# ---------------- المونتاج (Remotion: video/) ----------------
+style:
+  accent: "#e50914"       # اللون الرئيسي (أحمر كيما الثمبنيلات اللي بعثتهم)
+  chapter_label: {en: "CHAPTER", es: "CAPÍTULO"}
 
+media:
+  sources: ["pexels", "pixabay"]   # لقطات b-roll مجانية
+  clip_max_seconds: 6
+  music_volume: 0.07               # حط mp3 بلا حقوق في assets/music
+
+# ---------------- النشر ----------------
 publish:
-  # نشر أوتوماتيكي ولا لا لكل منصة
   youtube: true
   tiktok: true
   instagram: true
   facebook: true
-  # قنوات يوتيوب: كل لغة عندها refresh token خاص (secret)
   # حد يوتيوب: 10,000 وحدة/يوم وكل رفع = 1,600 ← طويل + شورت واحد لكل لغة = 6,400 ✅
   # (الشورتس الأخرى تروح لـ TikTok / Instagram / Facebook عادي)
   youtube_shorts_per_video: 1
   youtube_privacy: "public"   # public | unlisted | private
-  youtube_category: "27"      # 27 = Education
-  # يوتيوب يطلب الإفصاح على المحتوى المولّد بالذكاء الاصطناعي
-  ai_disclosure: true
+  youtube_category: "24"      # 24 = Entertainment, 27 = Education, 17 = Sports
+  ai_disclosure: true         # يوتيوب يطلب الإفصاح على الصوت المولّد

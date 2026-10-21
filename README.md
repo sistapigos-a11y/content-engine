@@ -3,108 +3,145 @@
 كل يوم، بلا ما تدخل:
 
 ```
-اختيار موضوع ← سكريبت وثائقي (20 دقيقة) ← تقييم وتحسين أوتوماتيكي ← تكييف للإسبانية
-   ← تعليق صوتي ← لقطات فيديو مجانية ← مونتاج + موسيقى + ترجمة ← ثمبنيل
-   ← 3 شورتس لكل لغة مع كابشن متحرك
-   ← نشر: YouTube (طويل + Shorts)، TikTok، Instagram Reels، Facebook Reels
+ترندات اليوم (Wikipedia + Google Trends)
+  ← اختيار قصة (شخصية مشهورة حالياً / لغز)       مثال: "Xavi Warned Us 3 Years Ago"
+  ← بحث من Wikipedia (حقائق حقيقية) ← سكريبت 20 دقيقة ← مراجعة + تدقيق حقائق ← نسخة إسبانية
+  ← صوتك أنت (نسخة AI من صوتك) بالإنجليزية والإسبانية
+  ← صور الشخصيات (Wikimedia Commons) + لقطات b-roll + نصوص متحركة + بطاقات الفصول
+  ← مونتاج بـ Remotion ← ثمبنيل "NOBODY [الشخص] BELIEVED"
+  ← 3 شورتس لكل لغة مع كابشن كلمة بكلمة
+  ← نشر: YouTube (طويل + Shorts)، TikTok، Instagram Reels، Facebook Reels
 ```
 
-يخدم مجاناً على **GitHub Actions** (ما تحتاجش سيرفر ولا PC مشعول).
+يخدم مجاناً على **GitHub Actions**: الإنجليزية والإسبانية يتمونتجو **في نفس الوقت** (جوج machines).
 
-## الأدوات (كلها مجانية)
+---
 
-| المرحلة | الأداة | التكلفة |
+## 🎙️ 1) صوتك (أهم خطوة)
+
+سجّل **15 إلى 30 ثانية** بصوتك:
+- بلاصة هادية بلا صدى، ميكرو قريب، بلا موسيقى
+- اقرا نص بالإنجليزية بنفس الأسلوب اللي تحب يكون فيه الفيديو (حماس / غموض)
+- احفظو **WAV** وحطو في: `assets/voice/me.wav`
+- اختياري: سجّل وحدة بالإسبانية `assets/voice/me_es.wav` (الأكسنت يطلع أحسن). إذا ما كاينش، يستعمل `me.wav` للزوج.
+
+**جرّب الصوت قبل كلش:** Actions → Daily content → Run workflow → mode: `voice-test` ← حمّل `voice-test` من Artifacts واسمع.
+
+| الخيار | التكلفة | الجودة | السرعة |
+|---|---|---|---|
+| `chatterbox` (الافتراضي) | مجاني، open-source (MIT) | مليحة | بطيء على CPU (~1-2 ساعة لفيديو 20 دقيقة) |
+| `elevenlabs` | مدفوع: فيديو 20 دقيقة × جوج لغات = ~40 دقيقة صوت في النهار، والخطط الرخيصة ما تكفيش | ممتازة | سريع |
+
+لـ ElevenLabs: اعمل **Instant Voice Clone** في الموقع، حط `ELEVENLABS_API_KEY` و `ELEVENLABS_VOICE_ID` في Secrets، وبدّل `voice.provider: elevenlabs` في `config.yaml`.
+
+> ⚠️ استعمل صوتك أنت برك. نسخ صوت شخص آخر بلا إذنو ممنوع في كل المنصات.
+
+---
+
+## 🎨 2) المونتاج — Remotion (`video/`)
+
+```
+video/src/
+  Video.tsx                 التركيب الرئيسي (طويل 1920×1080 + شورت 1080×1920)
+  components/Shots.tsx      الصور (Ken Burns + خلفية blur) واللقطات (zoom خفيف)
+  components/SceneView.tsx  نص متحرك، اقتباسات، بطاقات الفصول
+  components/Captions.tsx   كابشن الشورتس (الكلمة اللي تنقال بالأحمر)
+  Thumbnail.tsx             الثمبنيل: كلمة يسار + الشخص في الوسط + كلمة يمين + شخص ثاني بالأحمر
+  fonts.ts                  Anton + Montserrat (محليين، ما يحتاجوش انترنت)
+```
+
+بدّل الستايل كيما تحب (الألوان، الخطوط، الحركات) — Python غير يبعث `props.json`.
+
+**تشوف فيديو حقيقي في Studio وتعدّل عليه مباشرة:**
+```bash
+cd video && npm install
+npx remotion studio --props=../work/<JOB>/en/long/props.json --public-dir=../work/<JOB>/en/long
+```
+
+اللون الرئيسي: `style.accent` في `config.yaml`.
+
+---
+
+## 🔥 3) النيش: شخصيات ترند + ألغاز
+
+في `config.yaml` ← `channel.formats`:
+- `trending_person` (weight 2): كل يوم يشوف شكون راهو ترند (أكثر صفحات Wikipedia مشاهدة البارح + Google Trends في US/GB/MX/ES/AR)، ويختار لاعب / ستريمر / يوتيوبر / رابر عندو قصة: "Nobody Believed"، "Was Right All Along"، "The Rise of".
+- `mystery` (weight 1): النيش القديم.
+
+بدّل الـ weights كيما تحب (مثلاً `mystery: 0` = غير شخصيات).
+
+**الصور:** من Wikimedia Commons برك (مرخّصة للاستعمال)، والحقوق تتكتب أوتوماتيكياً في الوصف. ما يستعملش كليبات من يوتيوب ولا من الماتشات، لأنها تجيب copyright strikes.
+
+---
+
+## ⚙️ 4) التركيب (مرة وحدة)
+
+### GitHub
+1. أنشئ repository **Public** (Actions بلا حدود؛ Private ما يكفيش).
+2. ارفع الملفات + `assets/voice/me.wav`.
+3. المفاتيح في: **Settings → Secrets and variables → Actions**.
+
+### المفاتيح
+| Secret | منين | ضروري؟ |
 |---|---|---|
-| الكتابة | Google Gemini API (+ Groq احتياط) | مجاني (free tier) |
-| الصوت | Microsoft Edge TTS | مجاني |
-| اللقطات | Pexels + Pixabay | مجاني |
-| المونتاج | ffmpeg | مجاني |
-| التشغيل اليومي | GitHub Actions | مجاني |
-| النشر | APIs الرسمية تاع كل منصة | مجاني |
+| `GEMINI_API_KEY` | aistudio.google.com | ✅ |
+| `GROQ_API_KEY` | console.groq.com | احتياط |
+| `PEXELS_API_KEY` | pexels.com/api | ✅ |
+| `PIXABAY_API_KEY` | pixabay.com/api/docs | مستحسن |
+| `HF_TOKEN` | huggingface.co/settings/tokens | مستحسن (تحميل موديل الصوت أسرع) |
+| `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID` | elevenlabs.io | غير إذا اخترت ElevenLabs |
 
----
-
-## خطوات التركيب (مرة وحدة برك، ~ ساعة)
-
-### 1) GitHub
-1. اعمل حساب في github.com وأنشئ repository جديد (**Public** = دقائق Actions بلا حدود؛ Private = 2000 دقيقة/شهر وهذا ما يكفيش للفيديو اليومي).
-2. ارفع هاذ الملفات فيه.
-3. كل المفاتيح تتحط في: **Settings → Secrets and variables → Actions → New repository secret**.
-
-### 2) مفاتيح الكتابة واللقطات
-| Secret | منين تجيبو |
-|---|---|
-| `GEMINI_API_KEY` | aistudio.google.com → Get API key |
-| `GROQ_API_KEY` | console.groq.com → API Keys (احتياط إذا Gemini طاح) |
-| `PEXELS_API_KEY` | pexels.com/api |
-| `PIXABAY_API_KEY` | pixabay.com/api/docs (بعد التسجيل) |
-
-### 3) YouTube (قناة EN + قناة ES)
-1. console.cloud.google.com → مشروع جديد → فعّل **YouTube Data API v3**.
-2. **OAuth consent screen** → External → زيد إيميلك → ومن بعد اضغط **Publish app** (مهم! إذا تخليه في Testing الـ token يموت بعد 7 أيام).
-3. **Credentials → Create OAuth client ID → Desktop app** → خذ `Client ID` و `Client secret`.
-4. في الـ PC تاعك:
-   ```bash
-   pip install requests
-   python scripts/get_youtube_token.py CLIENT_ID CLIENT_SECRET
-   ```
-   اختار القناة الإنجليزية ← خذ الـ token. عاودها واختار القناة الإسبانية.
+### YouTube (قناة EN + قناة ES)
+1. console.cloud.google.com ← مشروع جديد ← فعّل **YouTube Data API v3**.
+2. **OAuth consent screen** ← External ← **Publish app** (إذا يبقى Testing الـ token يموت بعد 7 أيام).
+3. **Credentials ← OAuth client ID ← Desktop app**.
+4. في الـ PC: `python scripts/get_youtube_token.py CLIENT_ID CLIENT_SECRET` ← اختار القناة الإنجليزية، ومن بعد عاود للإسبانية.
 5. Secrets: `YT_CLIENT_ID`, `YT_CLIENT_SECRET`, `YT_REFRESH_TOKEN_EN`, `YT_REFRESH_TOKEN_ES`
-6. ⚠️ **مهم:** مشاريع Google الجديدة الفيديوهات تاعها تترفع **Private** حتى تعمل **YouTube API Audit** (فورم مجاني: support.google.com/youtube/contact/yt_api_form). اعملو من النهار الأول، ياخذ من أسبوع لعدة أسابيع.
-7. فعّل الحساب بالهاتف (youtube.com/verify) باش الثمبنيل يتحط أوتوماتيكياً.
+6. ⚠️ اعمل **YouTube API Audit** (support.google.com/youtube/contact/yt_api_form). قبل الموافقة الفيديوهات تترفع **Private**.
+7. فعّل القناة بالهاتف (youtube.com/verify) باش الثمبنيل يتحط.
 
-### 4) TikTok
-1. developers.tiktok.com → Create app → زيد **Content Posting API** (Direct Post) + **Login Kit**.
-2. Secrets: `TIKTOK_CLIENT_KEY`, `TIKTOK_CLIENT_SECRET`، والـ refresh token لكل حساب: `TIKTOK_REFRESH_TOKEN_EN`, `TIKTOK_REFRESH_TOKEN_ES` (تجيبهم بـ Login Kit مرة وحدة، يدومو 365 يوم).
-3. ⚠️ قبل ما TikTok يوافق على الـ app (audit)، الفيديوهات تنشر **خاصة (SELF_ONLY)**. بعد الموافقة زيد Variable اسمها `TIKTOK_PRIVACY` = `PUBLIC_TO_EVERYONE`.
+### TikTok
+developers.tiktok.com ← app ← **Content Posting API** + **Login Kit**.
+Secrets: `TIKTOK_CLIENT_KEY`, `TIKTOK_CLIENT_SECRET`, `TIKTOK_REFRESH_TOKEN_EN`, `TIKTOK_REFRESH_TOKEN_ES`.
+⚠️ قبل الـ audit الفيديوهات تكون خاصة. بعد الموافقة: Variable `TIKTOK_PRIVACY` = `PUBLIC_TO_EVERYONE`.
 
-### 5) Instagram + Facebook
-1. حوّل Instagram لحساب **Professional (Business/Creator)** واربطو بـ Facebook Page.
-2. developers.facebook.com → Create app (Business) → زيد Instagram Graph API.
-3. خذ **Page Access Token طويل المدة** (ما يموتش) بالصلاحيات: `instagram_content_publish`, `pages_manage_posts`, `pages_read_engagement`, `publish_video`.
-4. Secrets لكل لغة: `META_TOKEN_EN`, `IG_USER_ID_EN`, `FB_PAGE_ID_EN` (ونفسهم بـ `_ES`).
+### Instagram + Facebook
+حساب Instagram **Professional** مربوط بـ Facebook Page ← developers.facebook.com ← **Page Access Token طويل المدة** (`instagram_content_publish`, `pages_manage_posts`, `publish_video`).
+Secrets: `META_TOKEN_EN`, `IG_USER_ID_EN`, `FB_PAGE_ID_EN` (ونفسهم بـ `_ES`).
 
-> أي منصة ما حطيتش المفاتيح تاعها، السيستام يفوتها بلا ما يطيح. تقدر تبدا بـ YouTube برك وتزيد الباقي من بعد.
-
-### 6) التجربة الأولى
-- **Actions → Daily content → Run workflow → mode: `quick`** ← فيديو تجريبي صغير بلا نشر. حمّلو من **Artifacts** وشوف الجودة.
-- من بعد `no-publish` ← فيديو كامل بلا نشر.
-- إذا عجبك: خلّيه، يخدم وحدو كل يوم على 13:17 UTC.
+> أي منصة بلا مفاتيح يفوتها السيستام بلا ما يطيح.
 
 ---
 
-## التخصيص
-كلش في `config.yaml`:
-- `niche` — موضوع القناة (الأهم!)
-- الأصوات: قائمة الأصوات المجانية: `edge-tts --list-voices`
-- مدة الفيديو، عدد الشورتس، الوقت في `.github/workflows/daily.yml` (`cron`)
-- موسيقى: حط ملفات mp3 بلا حقوق (YouTube Audio Library) في `assets/music/`
-- خط الثمبنيل: حط `thumb.ttf` في `assets/fonts/`
+## ▶️ 5) التشغيل
 
-## حدود لازم تعرفها
-- **YouTube quota:** 10,000 وحدة/يوم، كل رفع = 1,600. الإعداد الافتراضي: طويل + شورت واحد لكل لغة = 4 رفعات = 6,400 ✅ (`youtube_shorts_per_video`). باقي الشورتس يروحو لـ TikTok/Instagram/Facebook. تحب أكثر؟ مشروع Google Cloud ثاني للقناة الإسبانية، أو اطلب زيادة quota في الـ audit.
-- **سياسة يوتيوب (Inauthentic / mass-produced content):** القنوات اللي تنشر محتوى آلي متكرر بلا قيمة تتحرم من الربح. السيستام مصمم يقلل هاذ الخطر (سكريبت قصصي حقيقي، مراجعة جودة، إفصاح AI، صوت واضح)، لكن **نصيحتي** تشوف الفيديوهات الأولى قبل ما تخليه 100% وحدو، وتبدل `niche` لموضوع عندك فيه زاوية خاصة.
-- **الحقائق:** الذكاء الاصطناعي يقدر يغلط. السيستام يطلب منه يتجنب الاختراع ويعلّم المعلومات المشكوك فيها، لكن مواضيع حساسة (صحة، سياسة، أشخاص أحياء) خليها برا الـ niche.
-- **Edge TTS** خدمة مجانية غير رسمية من Microsoft — إذا يوماً توقفت، بدّل `engine/tts.py` لمزوّد آخر (ElevenLabs/Google TTS).
+**Actions → Daily content → Run workflow**:
+| mode | واش يدير |
+|---|---|
+| `voice-test` | جملتين بصوتك (EN + ES) |
+| `quick` | فيديو صغير بالإنجليزية بلا نشر |
+| `no-publish` | فيديو كامل بالزوج لغات بلا نشر (حمّلو من Artifacts وشوفو) |
+| `full` | كلش + نشر (هذا اللي يخدم وحدو كل يوم 11:17 UTC) |
+
+---
+
+## ⚠️ حوايج لازم تعرفهم
+- **YouTube quota:** 10,000/يوم، كل رفع = 1,600. الافتراضي: طويل + شورت واحد لكل لغة = 6,400 ✅. باقي الشورتس يروحو لـ TikTok/IG/FB.
+- **قصص أشخاص حقيقيين:** السيستام يكتب من Wikipedia ويطلب من الـ AI ما يخترعش، وما يحكيش إشاعات على أنها حقائق. السكريبت يتراجع زوج مرات، ومنها مرة تدقيق في الحقائق. لكن الغلط يقدر يصرا، والقناة قناتك أنت. **نصيحتي:** في الأسابيع الأولى استعمل `no-publish` وشوف الفيديوهات قبل ما تخليه `full`.
+- **سياسة يوتيوب (inauthentic content):** المحتوى الآلي المكرر يقدر يتحرم من الربح. صوتك + قصص ترند + مونتاج متنوع يقللو الخطر بزاف.
+- **الوقت:** بـ Chatterbox على CPU كل لغة تاخذ ~2-3 ساعات (صوت + مونتاج)، والحد في GitHub هو 6 ساعات. إذا قربت تفوتو: نقّص `target_minutes`، ولا استعمل ElevenLabs.
 
 ## هيكل المشروع
 ```
-config.yaml              الإعدادات
-run.py                   نقطة التشغيل
-engine/writer.py         الموضوع، السكريبت، المراجعة، الإسبانية، الشورتس، العناوين
-engine/llm.py            Gemini / Groq / Claude
-engine/tts.py            الصوت
-engine/media.py          لقطات Pexels / Pixabay
-engine/render.py         المونتاج + الثمبنيل
-engine/captions.py       الترجمة (SRT + كابشن متحرك)
-engine/uploaders/        YouTube, TikTok, Instagram/Facebook
-engine/pipeline.py       كل المراحل بالترتيب (ويكمّل وين حبس إذا صرا خطأ)
-state/history.json       المواضيع اللي تنشرت (باش ما يعاودش)
-```
-
-تشغيل محلي:
-```bash
-pip install -r requirements.txt   # + ffmpeg
-export GEMINI_API_KEY=... PEXELS_API_KEY=...
-python run.py --quick --no-publish
+config.yaml            كل الإعدادات
+run.py                 التشغيل (stages: write / produce / finalize)
+engine/trends.py       شكون ترند اليوم
+engine/people.py       بحث Wikipedia + صور Commons + قص الخلفية للثمبنيل
+engine/writer.py       الموضوع، السكريبت، المراجعة، الإسبانية، الشورتس، العناوين
+engine/tts.py          صوتك (Chatterbox / ElevenLabs / Edge)
+engine/align.py        توقيت كل كلمة (faster-whisper)
+engine/media.py        لقطات Pexels / Pixabay
+engine/render.py       يحضّر props ويشغّل Remotion
+engine/uploaders/      YouTube, TikTok, Instagram/Facebook
+video/                 مشروع Remotion
 ```

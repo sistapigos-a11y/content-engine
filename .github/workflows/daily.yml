@@ -2,11 +2,11 @@ name: Daily content
 
 on:
   schedule:
-    - cron: "17 13 * * *"   # every day 13:17 UTC (afternoon in the US / Latin America)
+    - cron: "17 11 * * *"   # every day 11:17 UTC -> videos are ready for the US / LatAm afternoon
   workflow_dispatch:
     inputs:
       mode:
-        description: "full | no-publish | quick"
+        description: "full | no-publish | quick | voice-test"
         default: "full"
 
 concurrency:
@@ -16,72 +16,126 @@ concurrency:
 permissions:
   contents: write
 
+env:
+  JOB_NAME: run-${{ github.run_id }}
+  MODE: ${{ github.event.inputs.mode || 'full' }}
+  GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+  GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+  ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+  ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+  ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID }}
+  HF_TOKEN: ${{ secrets.HF_TOKEN }}
+
 jobs:
-  produce:
+  # ---------------------------------------------------------------- 1. write
+  write:
+    if: github.event.inputs.mode != 'voice-test'
     runs-on: ubuntu-latest
-    timeout-minutes: 340
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
+        with: {python-version: "3.11", cache: pip}
+      - run: pip install -r requirements.txt
+      - name: Pick topic, research, write scripts
+        run: |
+          if [ "$MODE" = "quick" ]; then python run.py --stage write --job "$JOB_NAME" --quick
+          else python run.py --stage write --job "$JOB_NAME"; fi
+      - uses: actions/upload-artifact@v4
         with:
-          python-version: "3.12"
-          cache: pip
+          name: job
+          path: work/${{ env.JOB_NAME }}/job.json
+          retention-days: 7
 
-      - name: Install tools
+  # ---------------------------------------------------------------- 2. produce (EN + ES in parallel)
+  produce:
+    needs: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    strategy:
+      fail-fast: false
+      matrix:
+        lang: [en, es]
+    env:
+      LANG_CODE: ${{ matrix.lang }}
+      PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+      PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+      YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+      YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+      YT_REFRESH_TOKEN_EN: ${{ secrets.YT_REFRESH_TOKEN_EN }}
+      YT_REFRESH_TOKEN_ES: ${{ secrets.YT_REFRESH_TOKEN_ES }}
+      TIKTOK_CLIENT_KEY: ${{ secrets.TIKTOK_CLIENT_KEY }}
+      TIKTOK_CLIENT_SECRET: ${{ secrets.TIKTOK_CLIENT_SECRET }}
+      TIKTOK_REFRESH_TOKEN_EN: ${{ secrets.TIKTOK_REFRESH_TOKEN_EN }}
+      TIKTOK_REFRESH_TOKEN_ES: ${{ secrets.TIKTOK_REFRESH_TOKEN_ES }}
+      TIKTOK_PRIVACY: ${{ vars.TIKTOK_PRIVACY }}
+      META_TOKEN_EN: ${{ secrets.META_TOKEN_EN }}
+      META_TOKEN_ES: ${{ secrets.META_TOKEN_ES }}
+      IG_USER_ID_EN: ${{ secrets.IG_USER_ID_EN }}
+      IG_USER_ID_ES: ${{ secrets.IG_USER_ID_ES }}
+      FB_PAGE_ID_EN: ${{ secrets.FB_PAGE_ID_EN }}
+      FB_PAGE_ID_ES: ${{ secrets.FB_PAGE_ID_ES }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - uses: actions/download-artifact@v4
+        with: {name: job, path: "work/${{ env.JOB_NAME }}"}
+      - name: Voice, visuals, Remotion render, publish
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq ffmpeg fonts-dejavu-core
-          pip install -r requirements.txt
-
-      - name: Produce and publish
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
-          PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
-          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
-          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
-          YT_REFRESH_TOKEN_EN: ${{ secrets.YT_REFRESH_TOKEN_EN }}
-          YT_REFRESH_TOKEN_ES: ${{ secrets.YT_REFRESH_TOKEN_ES }}
-          TIKTOK_CLIENT_KEY: ${{ secrets.TIKTOK_CLIENT_KEY }}
-          TIKTOK_CLIENT_SECRET: ${{ secrets.TIKTOK_CLIENT_SECRET }}
-          TIKTOK_REFRESH_TOKEN_EN: ${{ secrets.TIKTOK_REFRESH_TOKEN_EN }}
-          TIKTOK_REFRESH_TOKEN_ES: ${{ secrets.TIKTOK_REFRESH_TOKEN_ES }}
-          TIKTOK_PRIVACY: ${{ vars.TIKTOK_PRIVACY }}
-          META_TOKEN_EN: ${{ secrets.META_TOKEN_EN }}
-          META_TOKEN_ES: ${{ secrets.META_TOKEN_ES }}
-          IG_USER_ID_EN: ${{ secrets.IG_USER_ID_EN }}
-          IG_USER_ID_ES: ${{ secrets.IG_USER_ID_ES }}
-          FB_PAGE_ID_EN: ${{ secrets.FB_PAGE_ID_EN }}
-          FB_PAGE_ID_ES: ${{ secrets.FB_PAGE_ID_ES }}
-        run: |
-          MODE="${{ github.event.inputs.mode || 'full' }}"
           case "$MODE" in
-            no-publish) python run.py --no-publish ;;
-            quick)      python run.py --quick --no-publish ;;
-            *)          python run.py ;;
+            full) python run.py --stage produce --job "$JOB_NAME" --lang "$LANG_CODE" ;;
+            *)    python run.py --stage produce --job "$JOB_NAME" --lang "$LANG_CODE" --no-publish ;;
           esac
-
-      - name: Save topic history
+      - uses: actions/upload-artifact@v4
         if: always()
+        with:
+          name: videos-${{ matrix.lang }}
+          path: |
+            work/${{ env.JOB_NAME }}/${{ matrix.lang }}/*.mp4
+            work/${{ env.JOB_NAME }}/${{ matrix.lang }}/*.jpg
+            work/${{ env.JOB_NAME }}/${{ matrix.lang }}/*.srt
+            work/${{ env.JOB_NAME }}/${{ matrix.lang }}/result.json
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # ---------------------------------------------------------------- 3. history
+  finalize:
+    needs: [write, produce]
+    if: always() && needs.write.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11", cache: pip}
+      - run: pip install -r requirements.txt
+      - uses: actions/download-artifact@v4
+        with: {name: job, path: "work/${{ env.JOB_NAME }}"}
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with: {name: videos-en, path: "work/${{ env.JOB_NAME }}/en"}
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with: {name: videos-es, path: "work/${{ env.JOB_NAME }}/es"}
+      - run: python run.py --stage finalize --job "$JOB_NAME"
+      - name: Save topic history
         run: |
           git config user.name "content-bot"
           git config user.email "content-bot@users.noreply.github.com"
           git add state/
           git diff --cached --quiet || git commit -m "Update content history [skip ci]"
-          git push || true
+          git pull --rebase && git push
 
-      - name: Keep videos for 7 days (download from the Actions tab)
-        if: always()
-        uses: actions/upload-artifact@v4
+  # ---------------------------------------------------------------- voice test
+  voice-test:
+    if: github.event.inputs.mode == 'voice-test'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: python run.py --voice-test
+      - uses: actions/upload-artifact@v4
         with:
-          name: videos-${{ github.run_id }}
-          path: |
-            work/*/*/*.mp4
-            work/*/*/*.jpg
-            work/*/*/*.srt
-            work/*/job.json
+          name: voice-test
+          path: work/voice-test/
           retention-days: 7
-          if-no-files-found: ignore

@@ -1,0 +1,36 @@
+name: Setup render tools
+description: Python + AI voice/cut-out models, Node + Remotion, ffmpeg. Models are cached between runs.
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v5
+      with: {python-version: "3.11", cache: pip}
+    - uses: actions/setup-node@v4
+      with:
+        node-version: "22"
+        cache: npm
+        cache-dependency-path: video/package-lock.json
+    - name: System packages
+      shell: bash
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y -qq ffmpeg
+    - name: Model cache (voice clone, whisper, cut-outs)
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/huggingface
+          ~/.u2net
+        key: models-v1
+    - name: Python packages
+      shell: bash
+      run: |
+        pip install -r requirements.txt
+        pip install torch==2.6.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cpu
+        pip install -r requirements-ai.txt
+    - name: Remotion
+      shell: bash
+      working-directory: video
+      run: |
+        npm ci
+        npx remotion browser ensure

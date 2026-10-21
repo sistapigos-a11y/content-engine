@@ -1,0 +1,5 @@
+# Heavy, optional: voice cloning (Chatterbox), word timings (faster-whisper), photo cut-outs (rembg).
+# Install torch CPU first:  pip install torch==2.6.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cpu
+chatterbox-tts==0.1.7
+faster-whisper==1.2.1
+rembg[cpu]==2.0.85

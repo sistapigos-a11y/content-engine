@@ -1,158 +1,199 @@
-"""Turns a script into a finished video: voiceover, footage, music, captions."""
+"""Bridge to the Remotion project in video/: builds the voiceover, picks visuals for every
+scene, writes props.json and renders with `remotion render` / `remotion still`."""
+import json
+import os
 import random
+import shutil
+import subprocess
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageFont
-
-from . import captions, tts
-from .media import MediaPicker, fallback_clip
+from . import captions, people, tts
+from .media import MediaPicker
 from .util import ROOT, log, media_duration, run
 
 FPS = 30
 FORMATS = {"long": (1920, 1080), "short": (1080, 1920)}
+VIDEO_DIR = ROOT / "video"
+PHOTO_SECONDS = 4.0  # a still photo stays on screen at most this long
 
 
-def _voiceover(scenes, lang_cfg, workdir: Path):
-    """One mp3 per scene, then joined; returns (audio_path, words, scene_bounds)."""
-    words, bounds, files, t = [], [], [], 0.0
+def remotion(args: list[str]):
+    cmd = ["npx", "remotion", *args, "--log=warn"]
+    if os.environ.get("REMOTION_BROWSER"):
+        cmd.append(f"--browser-executable={os.environ['REMOTION_BROWSER']}")
+    proc = subprocess.run(cmd, cwd=VIDEO_DIR, capture_output=True, text=True)
+    if proc.returncode != 0:
+        raise RuntimeError(f"Remotion failed:\n{(proc.stdout + proc.stderr)[-3000:]}")
+
+
+class Assets:
+    """Copies everything Remotion needs into the job's public dir and remembers photo credits."""
+
+    def __init__(self, public: Path, cfg: dict, kind: str):
+        self.public = public
+        (public / "assets").mkdir(parents=True, exist_ok=True)
+        self.stock = MediaPicker(cfg, portrait=kind == "short")
+        self.max_clip = cfg["media"]["clip_max_seconds"] if kind == "long" else 3.0
+        self._photos: dict[str, list[dict]] = {}
+        self._photo_turn: dict[str, int] = {}
+        self.credits: set[str] = set()
+
+    def _place(self, src: Path) -> str:
+        dst = self.public / "assets" / src.name
+        if not dst.exists():
+            try:
+                os.link(src, dst)
+            except OSError:
+                shutil.copy(src, dst)
+        return f"assets/{src.name}"
+
+    def person_photos(self, name: str) -> list[dict]:
+        if name not in self._photos:
+            self._photos[name] = people.photos(name)
+        return self._photos[name]
+
+    def photo_shots(self, name: str, frames: int) -> list[dict]:
+        pics = self.person_photos(name) if name else []
+        if not pics:
+            return []
+        n = max(1, round(frames / (PHOTO_SECONDS * FPS) + 0.49))
+        shots = []
+        for k in range(n):
+            turn = self._photo_turn.get(name, 0)
+            self._photo_turn[name] = turn + 1
+            pic = pics[turn % len(pics)]  # rotate so the same photo doesn't repeat back to back
+            self.credits.add(pic["credit"])
+            shots.append({"src": self._place(pic["path"]), "kind": "image", "durationInFrames": 0})
+        return _spread(shots, frames)
+
+    def broll_shots(self, query: str, frames: int) -> list[dict]:
+        n = max(1, round(frames / (self.max_clip * FPS) + 0.49))
+        clips = self.stock.clips(query, n)
+        if not clips:
+            return []
+        shots, left, i = [], frames, 0
+        while left > 0:
+            clip = clips[i % len(clips)]
+            usable = int(min(self.max_clip, media_duration(clip) - 0.1) * FPS)
+            take = max(1, min(left, usable))
+            shots.append({"src": self._place(clip), "kind": "video", "durationInFrames": take})
+            left -= take
+            i += 1
+        return shots
+
+    def scene_shots(self, sc: dict, frames: int, main_person: str | None) -> list[dict]:
+        kind = sc.get("type", "broll")
+        person = sc.get("person") or None
+        order = {
+            "photo": [("photo", person), ("broll", sc.get("query")), ("photo", main_person)],
+            "broll": [("broll", sc.get("query")), ("photo", person), ("photo", main_person)],
+            "text": [("broll", sc.get("query")), ("photo", person or main_person)],
+            "quote": [("photo", person), ("broll", sc.get("query"))],
+        }.get(kind, [("broll", sc.get("query"))])
+        for how, what in order:
+            if not what:
+                continue
+            shots = self.photo_shots(what, frames) if how == "photo" else self.broll_shots(what, frames)
+            if shots:
+                return shots
+        return []  # Remotion draws a dark gradient
+
+
+def _spread(shots: list[dict], frames: int) -> list[dict]:
+    base, extra = divmod(frames, len(shots))
+    for i, s in enumerate(shots):
+        s["durationInFrames"] = base + (1 if i < extra else 0)
+    return shots
+
+
+def _voiceover(scenes, lang, cfg, workdir: Path):
+    """Per-scene audio -> one loudness-normalised track. Returns (voice.wav, words, bounds)."""
+    words, bounds, parts, t = [], [], [], 0.0
     for i, sc in enumerate(scenes):
-        mp3 = workdir / f"vo_{i:03}.mp3"
-        ws = tts.synthesize(sc["narration"], lang_cfg["voice"], lang_cfg.get("rate", "+0%"), mp3)
-        dur = media_duration(mp3) + 0.25  # small breath between scenes
+        raw, ws = tts.synthesize(sc["narration"], lang, cfg, workdir / f"vo_{i:03}")
+        dur = media_duration(raw) + 0.25  # a breath between scenes
         words += [{**w, "start": w["start"] + t, "end": w["end"] + t} for w in ws]
         bounds.append((t, t + dur))
-        files.append((mp3, dur))
+        wav = workdir / f"vo_{i:03}_pad.wav"
+        run(["ffmpeg", "-y", "-i", str(raw), "-af", f"apad=whole_dur={dur:.3f}", "-ar", "44100", "-ac", "2", str(wav)])
+        parts.append(wav)
         t += dur
     listfile = workdir / "vo_list.txt"
-    # pad each scene to its exact slot so audio and video stay in sync
-    padded = []
-    for i, (mp3, dur) in enumerate(files):
-        wav = workdir / f"vo_{i:03}.wav"
-        run(["ffmpeg", "-y", "-i", str(mp3), "-af", f"apad=whole_dur={dur:.3f}",
-             "-ar", "44100", "-ac", "2", str(wav)])
-        padded.append(wav)
-    listfile.write_text("".join(f"file '{p.resolve()}'\n" for p in padded))
-    voice = workdir / "voice.wav"
-    run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(listfile), "-c", "copy", str(voice)])
+    listfile.write_text("".join(f"file '{p.resolve()}'\n" for p in parts))
+    joined = workdir / "voice_raw.wav"
+    run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(listfile), "-c", "copy", str(joined)])
+    voice = tts.normalize_loudness(joined, workdir / "voice.wav")
+    for p in parts:
+        p.unlink(missing_ok=True)
     return voice, words, bounds
 
 
-def _segment(src: Path | None, out: Path, w, h, frames, portrait):
-    secs = frames / FPS
-    if src is None:
-        return fallback_clip(out, w, h, secs)
-    zoom = random.choice(["1.0+0.0004*on", "1.08-0.0004*on"])  # gentle push-in / pull-out
-    vf = (f"scale={w}:{h}:force_original_aspect_ratio=increase,crop={w}:{h},fps={FPS},"
-          f"zoompan=z='{zoom}':d=1:s={w}x{h}:fps={FPS}:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)',"
-          "setsar=1,eq=saturation=0.9:contrast=1.05")
-    run(["ffmpeg", "-y", "-stream_loop", "-1", "-i", str(src), "-vf", vf, "-frames:v", str(frames),
-         "-an", "-pix_fmt", "yuv420p", "-c:v", "libx264", "-preset", "veryfast", "-crf", "21",
-         "-r", str(FPS), str(out)])
-    return out
-
-
-def _visuals(scenes, bounds, cfg, kind, workdir: Path) -> Path:
-    w, h = FORMATS[kind]
-    portrait = kind == "short"
-    picker = MediaPicker(cfg, portrait)
-    max_clip = cfg["media"]["clip_max_seconds"] if kind == "long" else 3.5
-    segs, idx = [], 0
-    for sc, (start, end) in zip(scenes, bounds):
-        n = max(1, round((end - start) / max_clip + 0.49))
-        clips = picker.clips(sc["visual"], n)
-        step = (end - start) / n
-        for k in range(n):
-            # frame counts from absolute times so rounding never accumulates drift
-            f0, f1 = round((start + k * step) * FPS), round((start + (k + 1) * step) * FPS)
-            src = clips[k % len(clips)] if clips else None
-            segs.append(_segment(src, workdir / f"seg_{idx:04}.mp4", w, h, f1 - f0, portrait))
-            idx += 1
-    listfile = workdir / "seg_list.txt"
-    listfile.write_text("".join(f"file '{p.resolve()}'\n" for p in segs))
-    video = workdir / "visual.mp4"
-    run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(listfile), "-c", "copy", str(video)])
-    return video
-
-
-def _music() -> Path | None:
-    tracks = list((ROOT / "assets" / "music").glob("*.mp3"))
-    return random.choice(tracks) if tracks else None
-
-
-def render(scenes, lang_cfg, cfg, kind: str, workdir: Path, out: Path, burn_captions: bool):
+def render(scenes: list[dict], lang: str, cfg: dict, kind: str, workdir: Path, out: Path,
+           burn_captions: bool, chapters: dict[int, str] | None = None, main_person: str | None = None):
+    """Returns (video, srt, photo_credits)."""
     workdir.mkdir(parents=True, exist_ok=True)
     log.info("Rendering %s video (%d scenes) -> %s", kind, len(scenes), out)
-    voice, words, bounds = _voiceover(scenes, lang_cfg, workdir)
-    video = _visuals(scenes, bounds, cfg, kind, workdir)
+    voice, words, bounds = _voiceover(scenes, lang, cfg, workdir)
+    assets = Assets(workdir, cfg, kind)
     w, h = FORMATS[kind]
 
-    inputs = ["-i", str(video), "-i", str(voice)]
-    music = _music()
-    if music:
-        inputs += ["-stream_loop", "-1", "-i", str(music)]
-        vol = cfg["media"]["music_volume"]
-        afilter = (f"[2:a]volume={vol},afade=t=in:d=2[m];"
-                   "[1:a][m]amix=inputs=2:duration=first:dropout_transition=0[a]")
-    else:
-        afilter = "[1:a]anull[a]"
+    props_scenes = []
+    for i, (sc, (start, end)) in enumerate(zip(scenes, bounds)):
+        f0, f1 = round(start * FPS), round(end * FPS)  # absolute frames: no rounding drift
+        scene = {"from": f0, "durationInFrames": f1 - f0, "type": sc.get("type", "broll"),
+                 "shots": assets.scene_shots(sc, f1 - f0, main_person),
+                 "onscreen": sc.get("onscreen"), "person": sc.get("person")}
+        if scene["type"] in ("text", "quote") and not sc.get("onscreen"):
+            scene["type"] = "broll"
+        if chapters and i in chapters:
+            scene["chapter"] = {"index": list(chapters).index(i) + 1, "title": chapters[i]}
+        props_scenes.append(scene)
 
-    srt = captions.write_srt(words, out.with_suffix(".srt"))
-    if burn_captions:
-        ass = captions.write_ass(words, workdir / "captions.ass", w, h)
-        fonts = ROOT / "assets" / "fonts"
-        vfilter = f"[0:v]ass={ass}:fontsdir={fonts}[v]"
-        vcodec = ["-c:v", "libx264", "-preset", "medium", "-crf", "20", "-pix_fmt", "yuv420p"]
-        vmap = "[v]"
-    else:
-        vfilter = ""
-        vcodec = ["-c:v", "copy"]  # no re-encode: the long video is already final
-        vmap = "0:v"
+    tracks = list((ROOT / "assets" / "music").glob("*.mp3"))
+    music = assets._place(random.choice(tracks)) if tracks else None
+    total = round(bounds[-1][1] * FPS)
+    props = {
+        "width": w, "height": h, "fps": FPS, "durationInFrames": total,
+        "voice": voice.name, "music": music, "musicVolume": cfg["media"]["music_volume"],
+        "scenes": props_scenes, "captions": burn_captions,
+        "words": [{"text": x["word"], "startMs": int(x["start"] * 1000), "endMs": int(x["end"] * 1000)} for x in words],
+        "accent": cfg["style"]["accent"], "chapterLabel": cfg["style"]["chapter_label"][lang],
+    }
+    props_file = workdir / "props.json"
+    props_file.write_text(json.dumps(props, ensure_ascii=False))
 
     out.parent.mkdir(parents=True, exist_ok=True)
-    graph = f"{vfilter};{afilter}" if vfilter else afilter
-    run(["ffmpeg", "-y", *inputs, "-filter_complex", graph,
-         "-map", vmap, "-map", "[a]", *vcodec, "-c:a", "aac", "-b:a", "192k",
-         "-shortest", "-movflags", "+faststart", str(out)])
+    remotion(["render", "src/index.ts", "Video", str(out.resolve()), f"--props={props_file.resolve()}",
+              f"--public-dir={workdir.resolve()}", "--codec=h264", "--crf=20"])
+    srt = captions.write_srt(words, out.with_suffix(".srt"))
     log.info("Done: %s (%.1f s)", out, media_duration(out))
-    return out, srt
+    return out, srt, sorted(assets.credits)
 
 
-def thumbnail(video: Path, text: str, out: Path) -> Path:
-    frame = out.with_suffix(".frame.jpg")
-    dur = media_duration(video)
-    run(["ffmpeg", "-y", "-ss", f"{min(8, dur / 3):.2f}", "-i", str(video), "-frames:v", "1", str(frame)])
-    img = Image.open(frame).convert("RGB").resize((1280, 720))
-    img = ImageEnhance.Brightness(img.filter(ImageFilter.GaussianBlur(1))).enhance(0.55)
-    img = ImageEnhance.Contrast(img).enhance(1.3)
-    draw = ImageDraw.Draw(img)
-    font_path = next((p for p in [ROOT / "assets/fonts/thumb.ttf",
-                                  Path("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf")]
-                      if p.exists()), None)
-    text = text.upper()
-    size = 150
-    while size > 50:
-        font = ImageFont.truetype(str(font_path), size) if font_path else ImageFont.load_default()
-        lines = _wrap(draw, text, font, 1180)
-        if len(lines) <= 3:
-            break
-        size -= 10
-    y = 360 - (len(lines) * size * 1.1) / 2
-    for i, line in enumerate(lines):
-        color = (255, 214, 0) if i == len(lines) - 1 else (255, 255, 255)
-        draw.text((60, y), line, font=font, fill=color, stroke_width=8, stroke_fill=(0, 0, 0))
-        y += size * 1.1
-    img.save(out, quality=92)
-    frame.unlink(missing_ok=True)
+def thumbnail(idea: dict, md: dict, cfg: dict, video: Path, workdir: Path, out: Path) -> Path:
+    workdir.mkdir(parents=True, exist_ok=True)
+
+    def cut(name, tag):
+        if not name:
+            return None
+        for i, pic in enumerate(people.photos(name)[:4]):  # first photo that cuts out cleanly
+            res = people.cutout(pic["path"], workdir / f"{tag}_{i}.png")
+            if res:
+                return res.name
+        return None
+
+    main = cut(idea.get("main_person"), "main")
+    secondary = cut(idea.get("secondary_person"), "second") if main else None
+    background = None
+    if not main:  # no person: use a frame of the video itself
+        frame = workdir / "bg.jpg"
+        run(["ffmpeg", "-y", "-ss", f"{min(20, media_duration(video) / 4):.1f}", "-i", str(video),
+             "-frames:v", "1", str(frame)])
+        background = frame.name
+    props = {"left": md["thumb_left"], "right": md["thumb_right"], "main": main, "secondary": secondary,
+             "background": background, "accent": cfg["style"]["accent"]}
+    pf = workdir / "thumb_props.json"
+    pf.write_text(json.dumps(props, ensure_ascii=False))
+    remotion(["still", "src/index.ts", "Thumbnail", str(out.resolve()), f"--props={pf.resolve()}",
+              f"--public-dir={workdir.resolve()}", "--image-format=jpeg", "--jpeg-quality=92"])
     return out
-
-
-def _wrap(draw, text, font, width):
-    lines, cur = [], ""
-    for word in text.split():
-        trial = f"{cur} {word}".strip()
-        if draw.textlength(trial, font=font) <= width:
-            cur = trial
-        else:
-            lines.append(cur)
-            cur = word
-    return lines + [cur] if cur else lines
