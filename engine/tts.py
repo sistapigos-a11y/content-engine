@@ -172,6 +172,35 @@ def _elevenlabs(text, lang, cfg, out: Path):
     return path, words
 
 
+# --- Fish Audio (paid, cheap, your cloned voice) -------------------------------
+
+def _fish(text, lang, cfg, out: Path):
+    """Fish Audio TTS with your cloned voice model (create it once on fish.audio, then put its id
+    in FISH_VOICE_ID). The language is detected from the text, so one voice works for EN and ES."""
+    v = cfg["voice"]
+    voice_id = env(f"FISH_VOICE_ID_{lang.upper()}") or env("FISH_VOICE_ID", required=True)
+
+    def call():
+        r = requests.post("https://api.fish.audio/v1/tts", timeout=300, headers={
+            "Authorization": f"Bearer {env('FISH_API_KEY', required=True)}",
+            "Content-Type": "application/json",
+            "model": v.get("fish_model", "s2.1-pro")},
+            json={"text": text, "reference_id": voice_id, "format": "mp3",
+                  "temperature": v.get("fish_temperature", 0.7), "top_p": v.get("fish_top_p", 0.7),
+                  "prosody": {"speed": v.get("fish_speed", 1.0), "normalize_loudness": True},
+                  "normalize": True})
+        if r.status_code >= 400:
+            raise RuntimeError(f"Fish Audio HTTP {r.status_code}: {r.text[:300]}")
+        if not r.content:
+            raise RuntimeError("Fish Audio returned no audio")
+        return r.content
+
+    path = out.with_suffix(".mp3")
+    path.write_bytes(retry(call, what="fish-audio"))
+    from .align import word_timings
+    return path, word_timings(path, lang)
+
+
 # --- Edge TTS (free, generic voice) -------------------------------------------------
 
 async def _edge_stream(text, voice, rate, path):
@@ -196,7 +225,7 @@ def _edge(text, lang, cfg, out: Path):
     return path, words
 
 
-PROVIDERS = {"chatterbox": _chatterbox, "elevenlabs": _elevenlabs, "edge": _edge}
+PROVIDERS = {"chatterbox": _chatterbox, "elevenlabs": _elevenlabs, "fish": _fish, "edge": _edge}
 
 
 def normalize_loudness(path: Path, out: Path) -> Path:

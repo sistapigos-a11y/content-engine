@@ -2,8 +2,8 @@
 #  إعدادات السيستام — بدّل هنا برك، ما تحتاجش تمس الكود
 # =============================================================
 
-# الوضع الحالي: السيستام يكتب السكريبتات (EN + ES) برك، تلقاهم كل يوم في output/
-# الصوت متوقف. باش ترجعو: Settings ← Variables ← VOICE = on
+# الوضع الحالي: السكريبتات (EN + ES) في output/ + الصوت بـ Fish Audio في Artifacts (package-en / package-es)
+# باش توقف الصوت: Settings ← Variables ← VOICE = off
 # package = سكريبت + صوت | full = كلش أوتوماتيكي (مونتاج Remotion + نشر)
 output: package
 
@@ -37,9 +37,14 @@ languages:
 voice:
   # chatterbox = مجاني، ينسخ صوتك من تسجيل 10-30 ثانية (assets/voice/me.wav)
   # elevenlabs = مدفوع، أسرع وأطبع (يحتاج ELEVENLABS_API_KEY + ELEVENLABS_VOICE_ID)
+  # fish       = Fish Audio، رخيص وجودة مليحة (يحتاج FISH_API_KEY + FISH_VOICE_ID)
   # edge       = صوت مايكروسوفت مجاني (ماشي صوتك) — احتياط
-  provider: "chatterbox"
-  fallback: "edge"
+  provider: "fish"
+  fallback: null       # بلا احتياط: إذا Fish طاح، نفضلو خطأ واضح على صوت ماشي تاعك
+  fish_model: "s2.1-pro"
+  fish_temperature: 0.7
+  fish_top_p: 0.7
+  fish_speed: 1.0      # 0.9 أبطأ وأهدأ ← 1.1 أسرع
   exaggeration: 0.5    # 0.3 هادي ← 0.8 حماسي
   cfg_weight: 0.5      # أقل = أبطأ وأوضح
   temperature: 0.7

@@ -28,6 +28,9 @@ env:
   ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY || vars.ANTHROPIC_API_KEY }}
   ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY || vars.ELEVENLABS_API_KEY }}
   ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID || vars.ELEVENLABS_VOICE_ID }}
+  FISH_API_KEY: ${{ secrets.FISH_API_KEY || vars.FISH_API_KEY }}
+  FISH_VOICE_ID: ${{ secrets.FISH_VOICE_ID || vars.FISH_VOICE_ID }}
+  FISH_VOICE_ID_ES: ${{ secrets.FISH_VOICE_ID_ES || vars.FISH_VOICE_ID_ES }}
   HF_TOKEN: ${{ secrets.HF_TOKEN || vars.HF_TOKEN }}
   VOICE_KEY: ${{ secrets.VOICE_KEY || vars.VOICE_KEY }}
 
@@ -64,10 +67,10 @@ jobs:
 
   # ---------------------------------------------------------------- 2. voice (10 machines per language)
   # the cloned voice is slow on free CPUs, so the scenes are shared between 20 machines
-  # only runs when the repository variable VOICE is set to "on" (scripts-only by default)
+  # skipped when the repository variable VOICE is set to "off" (scripts only)
   voice:
     needs: write
-    if: vars.VOICE == 'on'
+    if: vars.VOICE != 'off'
     runs-on: ubuntu-24.04
     timeout-minutes: 340
     strategy:
@@ -94,7 +97,7 @@ jobs:
   # joins the voice parts (any scene a failed part missed is made here) and builds the package
   produce:
     needs: [write, voice]
-    if: always() && needs.write.result == 'success' && vars.VOICE == 'on'
+    if: always() && needs.write.result == 'success' && vars.VOICE != 'off'
     runs-on: ubuntu-24.04
     timeout-minutes: 340
     strategy:
