@@ -68,7 +68,7 @@ long_video:
   burn_subtitles: false   # الطويل: الترجمة تترفع كملف SRT
 
 shorts:
-  enabled: true
+  enabled: false          # بلا شورتس: فيديوهات طوال برك
   per_video: 3
   max_seconds: 55
 
