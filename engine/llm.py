@@ -19,7 +19,7 @@ class LLM:
             self.chain.append((c["fallback_provider"], c["fallback_model"]))
 
     def text(self, prompt: str, system: str = "", max_tokens: int = 8192, json_mode: bool = False) -> str:
-        last_err = None
+        errors = []
         for provider, model in self.chain:
             try:
                 call = getattr(self, f"_{provider}")
@@ -27,8 +27,8 @@ class LLM:
                              what=f"{provider}:{model}")
             except Exception as e:  # noqa: BLE001
                 log.warning("Provider %s failed: %s", provider, e)
-                last_err = e
-        raise RuntimeError(f"All LLM providers failed: {last_err}")
+                errors.append(f"{provider}/{model}: {e}")
+        raise RuntimeError("All LLM providers failed -> " + " | ".join(errors))
 
     def json(self, prompt: str, system: str = "", max_tokens: int = 8192):
         prompt += "\n\nReturn ONLY valid JSON, no commentary."
