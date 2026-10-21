@@ -12,9 +12,10 @@
 """
 import argparse
 import logging
+import time
 
 from engine import pipeline, tts
-from engine.util import ROOT, load_config
+from engine.util import ROOT, load_config, media_duration
 
 SAMPLES = {
     "en": "Three years ago, one man saw it coming. Everybody laughed at him. Nobody believed him. "
@@ -42,11 +43,20 @@ if __name__ == "__main__":
         cfg["languages"] = {"en": cfg["languages"]["en"]}
 
     if args.voice_test:
+        # no silent fallback here: the point is to hear the real cloned voice
+        cfg["voice"]["fallback"] = None
         out = ROOT / "work" / "voice-test"
         out.mkdir(parents=True, exist_ok=True)
         for lang, text in SAMPLES.items():
-            path, words = tts.synthesize(text, lang, cfg, out / lang)
-            logging.info("%s -> %s (%d words timed)", lang, path, len(words))
+            start = time.time()
+            try:
+                path, words = tts.synthesize(text, lang, cfg, out / lang)
+            except Exception as e:
+                print(f"::error::voice-test {lang} failed: {type(e).__name__}: {str(e)[-400:]}")
+                raise
+            took = time.time() - start
+            print(f"::notice::{lang}: {cfg['voice']['provider']} voice, {media_duration(path):.1f}s of audio "
+                  f"in {took:.0f}s, {len(words)} words timed")
         raise SystemExit
 
     name = args.job or pipeline.job_name()
