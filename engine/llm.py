@@ -14,9 +14,12 @@ def _ok(r: requests.Response) -> requests.Response:
 class LLM:
     def __init__(self, cfg: dict):
         c = cfg["llm"]
-        self.chain = [(c["provider"], c["model"])]
-        if c.get("fallback_provider"):
-            self.chain.append((c["fallback_provider"], c["fallback_model"]))
+        if c.get("chain"):
+            self.chain = [tuple(x) for x in c["chain"]]
+        else:
+            self.chain = [(c["provider"], c["model"])]
+            if c.get("fallback_provider"):
+                self.chain.append((c["fallback_provider"], c["fallback_model"]))
 
     def text(self, prompt: str, system: str = "", max_tokens: int = 8192, json_mode: bool = False) -> str:
         errors = []
@@ -24,7 +27,7 @@ class LLM:
             try:
                 call = getattr(self, f"_{provider}")
                 return retry(lambda: call(model, prompt, system, max_tokens, json_mode),
-                             what=f"{provider}:{model}")
+                             what=f"{provider}:{model}", base_delay=10)  # free tiers limit per minute
             except Exception as e:  # noqa: BLE001
                 log.warning("Provider %s failed: %s", provider, e)
                 errors.append(f"{provider}/{model}: {e}")
@@ -46,7 +49,8 @@ class LLM:
         key = env("GEMINI_API_KEY", required=True)
         body = {
             "contents": [{"role": "user", "parts": [{"text": prompt}]}],
-            "generationConfig": {"maxOutputTokens": max_tokens, "temperature": 0.9},
+            # newer Gemini models "think" first and that counts against the output budget
+            "generationConfig": {"maxOutputTokens": max(max_tokens, 32768), "temperature": 0.9},
         }
         if system:
             body["systemInstruction"] = {"parts": [{"text": system}]}
@@ -57,7 +61,7 @@ class LLM:
             params={"key": key}, json=body, timeout=300)
         _ok(r)
         parts = r.json()["candidates"][0]["content"]["parts"]
-        return "".join(p.get("text", "") for p in parts)
+        return "".join(p.get("text", "") for p in parts if not p.get("thought"))
 
     def _groq(self, model, prompt, system, max_tokens, json_mode):
         key = env("GROQ_API_KEY", required=True)
