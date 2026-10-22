@@ -2,7 +2,8 @@
   "topics": [
     "The Prophecy of Lamine Yamal",
     "Elizabeth Holmes",
-    "The Truth About Adin Ross"
+    "The Truth About Adin Ross",
+    "The Murder of Andrés Escobar"
   ],
   "published": [
     {
@@ -27,6 +28,15 @@
       "format": "imported",
       "links": {
         "en": {}
+      }
+    },
+    {
+      "job": "run-39846711039",
+      "topic": "The Murder of Andrés Escobar",
+      "format": "mystery",
+      "links": {
+        "en": {},
+        "es": {}
       }
     }
   ]
