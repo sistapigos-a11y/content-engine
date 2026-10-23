@@ -3,7 +3,8 @@
     "The Prophecy of Lamine Yamal",
     "Elizabeth Holmes",
     "The Truth About Adin Ross",
-    "The Murder of Andrés Escobar"
+    "The Murder of Andrés Escobar",
+    "The Miracle and Horror of Flight 571"
   ],
   "published": [
     {
@@ -33,6 +34,15 @@
     {
       "job": "run-39846711039",
       "topic": "The Murder of Andrés Escobar",
+      "format": "mystery",
+      "links": {
+        "en": {},
+        "es": {}
+      }
+    },
+    {
+      "job": "run-40015602214",
+      "topic": "The Miracle and Horror of Flight 571",
       "format": "mystery",
       "links": {
         "en": {},
