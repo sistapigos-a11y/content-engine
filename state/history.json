@@ -4,7 +4,8 @@
     "Elizabeth Holmes",
     "The Truth About Adin Ross",
     "The Murder of Andrés Escobar",
-    "The Miracle and Horror of Flight 571"
+    "The Miracle and Horror of Flight 571",
+    "The Resurrection of Raphinha"
   ],
   "published": [
     {
@@ -44,6 +45,15 @@
       "job": "run-40015602214",
       "topic": "The Miracle and Horror of Flight 571",
       "format": "mystery",
+      "links": {
+        "en": {},
+        "es": {}
+      }
+    },
+    {
+      "job": "run-40401154329",
+      "topic": "The Resurrection of Raphinha",
+      "format": "trending_person",
       "links": {
         "en": {},
         "es": {}
