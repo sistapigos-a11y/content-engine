@@ -6,7 +6,8 @@
     "The Murder of Andrés Escobar",
     "The Miracle and Horror of Flight 571",
     "The Resurrection of Raphinha",
-    "Eric Bauza"
+    "Eric Bauza",
+    "The Real Madrid Reality Check for Kylian Mbappé"
   ],
   "published": [
     {
@@ -63,6 +64,15 @@
     {
       "job": "run-40503403641",
       "topic": "Eric Bauza",
+      "format": "trending_person",
+      "links": {
+        "en": {},
+        "es": {}
+      }
+    },
+    {
+      "job": "run-40580971755",
+      "topic": "The Real Madrid Reality Check for Kylian Mbappé",
       "format": "trending_person",
       "links": {
         "en": {},
