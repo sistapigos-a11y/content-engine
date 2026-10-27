@@ -5,7 +5,8 @@
     "The Truth About Adin Ross",
     "The Murder of Andrés Escobar",
     "The Miracle and Horror of Flight 571",
-    "The Resurrection of Raphinha"
+    "The Resurrection of Raphinha",
+    "Eric Bauza"
   ],
   "published": [
     {
@@ -53,6 +54,15 @@
     {
       "job": "run-40401154329",
       "topic": "The Resurrection of Raphinha",
+      "format": "trending_person",
+      "links": {
+        "en": {},
+        "es": {}
+      }
+    },
+    {
+      "job": "run-40503403641",
+      "topic": "Eric Bauza",
       "format": "trending_person",
       "links": {
         "en": {},
