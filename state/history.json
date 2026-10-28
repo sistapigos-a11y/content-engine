@@ -8,7 +8,8 @@
     "The Resurrection of Raphinha",
     "Eric Bauza",
     "The Real Madrid Reality Check for Kylian Mbappé",
-    "Harry Kane's Battle Against Football's Cruelest Curse"
+    "Harry Kane's Battle Against Football's Cruelest Curse",
+    "Alexia Putellas's Fight to Reclaim Her Throne"
   ],
   "published": [
     {
@@ -83,6 +84,15 @@
     {
       "job": "run-40693853067",
       "topic": "Harry Kane's Battle Against Football's Cruelest Curse",
+      "format": "trending_person",
+      "links": {
+        "en": {},
+        "es": {}
+      }
+    },
+    {
+      "job": "run-40769659418",
+      "topic": "Alexia Putellas's Fight to Reclaim Her Throne",
       "format": "trending_person",
       "links": {
         "en": {},
