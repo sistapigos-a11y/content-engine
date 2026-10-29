@@ -10,7 +10,8 @@
     "The Real Madrid Reality Check for Kylian Mbappé",
     "Harry Kane's Battle Against Football's Cruelest Curse",
     "Alexia Putellas's Fight to Reclaim Her Throne",
-    "The Mastermind: How Nathan Fielder Outsmarted Reality"
+    "The Mastermind: How Nathan Fielder Outsmarted Reality",
+    "Cristiano Ronaldo's 1,000 Goal Obsession"
   ],
   "published": [
     {
@@ -103,6 +104,15 @@
     {
       "job": "run-40880405000",
       "topic": "The Mastermind: How Nathan Fielder Outsmarted Reality",
+      "format": "trending_person",
+      "links": {
+        "en": {},
+        "es": {}
+      }
+    },
+    {
+      "job": "run-40955835975",
+      "topic": "Cristiano Ronaldo's 1,000 Goal Obsession",
       "format": "trending_person",
       "links": {
         "en": {},
