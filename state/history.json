@@ -12,7 +12,8 @@
     "Alexia Putellas's Fight to Reclaim Her Throne",
     "The Mastermind: How Nathan Fielder Outsmarted Reality",
     "Cristiano Ronaldo's 1,000 Goal Obsession",
-    "Estêvão Willian: The Burden of Being Brazil's Next Phenom"
+    "Estêvão Willian: The Burden of Being Brazil's Next Phenom",
+    "The Redemption of Bryce Young"
   ],
   "published": [
     {
@@ -123,6 +124,15 @@
     {
       "job": "run-41202483695",
       "topic": "Estêvão Willian: The Burden of Being Brazil's Next Phenom",
+      "format": "trending_person",
+      "links": {
+        "en": {},
+        "es": {}
+      }
+    },
+    {
+      "job": "run-41237073894",
+      "topic": "The Redemption of Bryce Young",
       "format": "trending_person",
       "links": {
         "en": {},
