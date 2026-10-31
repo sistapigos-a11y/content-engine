@@ -11,7 +11,8 @@
     "Harry Kane's Battle Against Football's Cruelest Curse",
     "Alexia Putellas's Fight to Reclaim Her Throne",
     "The Mastermind: How Nathan Fielder Outsmarted Reality",
-    "Cristiano Ronaldo's 1,000 Goal Obsession"
+    "Cristiano Ronaldo's 1,000 Goal Obsession",
+    "Estêvão Willian: The Burden of Being Brazil's Next Phenom"
   ],
   "published": [
     {
@@ -113,6 +114,15 @@
     {
       "job": "run-40955835975",
       "topic": "Cristiano Ronaldo's 1,000 Goal Obsession",
+      "format": "trending_person",
+      "links": {
+        "en": {},
+        "es": {}
+      }
+    },
+    {
+      "job": "run-41202483695",
+      "topic": "Estêvão Willian: The Burden of Being Brazil's Next Phenom",
       "format": "trending_person",
       "links": {
         "en": {},
