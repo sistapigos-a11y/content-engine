@@ -13,7 +13,8 @@
     "The Mastermind: How Nathan Fielder Outsmarted Reality",
     "Cristiano Ronaldo's 1,000 Goal Obsession",
     "Estêvão Willian: The Burden of Being Brazil's Next Phenom",
-    "The Redemption of Bryce Young"
+    "The Redemption of Bryce Young",
+    "The 20-Year Career of Football's Greatest Con Artist"
   ],
   "published": [
     {
@@ -134,6 +135,15 @@
       "job": "run-41237073894",
       "topic": "The Redemption of Bryce Young",
       "format": "trending_person",
+      "links": {
+        "en": {},
+        "es": {}
+      }
+    },
+    {
+      "job": "run-41347637386",
+      "topic": "The 20-Year Career of Football's Greatest Con Artist",
+      "format": "mystery",
       "links": {
         "en": {},
         "es": {}
