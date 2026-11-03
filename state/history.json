@@ -16,7 +16,8 @@
     "The Redemption of Bryce Young",
     "The 20-Year Career of Football's Greatest Con Artist",
     "The 1904 Olympic Marathon",
-    "The Rise and Fall of Ross Ulbricht"
+    "The Rise and Fall of Ross Ulbricht",
+    "The 1998 World Cup Final Seizure"
   ],
   "published": [
     {
@@ -163,6 +164,15 @@
     {
       "job": "run-41546713714",
       "topic": "The Rise and Fall of Ross Ulbricht",
+      "format": "mystery",
+      "links": {
+        "en": {},
+        "es": {}
+      }
+    },
+    {
+      "job": "run-41725252228",
+      "topic": "The 1998 World Cup Final Seizure",
       "format": "mystery",
       "links": {
         "en": {},
