@@ -17,7 +17,8 @@
     "The 20-Year Career of Football's Greatest Con Artist",
     "The 1904 Olympic Marathon",
     "The Rise and Fall of Ross Ulbricht",
-    "The 1998 World Cup Final Seizure"
+    "The 1998 World Cup Final Seizure",
+    "The Tragedy of Adriano ‘The Emperor’"
   ],
   "published": [
     {
@@ -173,6 +174,15 @@
     {
       "job": "run-41725252228",
       "topic": "The 1998 World Cup Final Seizure",
+      "format": "mystery",
+      "links": {
+        "en": {},
+        "es": {}
+      }
+    },
+    {
+      "job": "run-41920806650",
+      "topic": "The Tragedy of Adriano ‘The Emperor’",
       "format": "mystery",
       "links": {
         "en": {},
