@@ -18,7 +18,8 @@
     "The 1904 Olympic Marathon",
     "The Rise and Fall of Ross Ulbricht",
     "The 1998 World Cup Final Seizure",
-    "The Tragedy of Adriano ‘The Emperor’"
+    "The Tragedy of Adriano ‘The Emperor’",
+    "The Identity of Satoshi Nakamoto"
   ],
   "published": [
     {
@@ -183,6 +184,15 @@
     {
       "job": "run-41920806650",
       "topic": "The Tragedy of Adriano ‘The Emperor’",
+      "format": "mystery",
+      "links": {
+        "en": {},
+        "es": {}
+      }
+    },
+    {
+      "job": "run-42233587299",
+      "topic": "The Identity of Satoshi Nakamoto",
       "format": "mystery",
       "links": {
         "en": {},
