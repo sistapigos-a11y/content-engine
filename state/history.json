@@ -20,7 +20,8 @@
     "The 1998 World Cup Final Seizure",
     "The Tragedy of Adriano ‘The Emperor’",
     "The Identity of Satoshi Nakamoto",
-    "The Tragic Life of Garrincha"
+    "The Tragic Life of Garrincha",
+    "The Calciopoli Wiretaps and Luciano Moggi's Shadow Network"
   ],
   "published": [
     {
@@ -203,6 +204,15 @@
     {
       "job": "run-42297987976",
       "topic": "The Tragic Life of Garrincha",
+      "format": "mystery",
+      "links": {
+        "en": {},
+        "es": {}
+      }
+    },
+    {
+      "job": "run-42376072590",
+      "topic": "The Calciopoli Wiretaps and Luciano Moggi's Shadow Network",
       "format": "mystery",
       "links": {
         "en": {},
