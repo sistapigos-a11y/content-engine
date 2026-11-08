@@ -21,7 +21,8 @@
     "The Tragedy of Adriano ‘The Emperor’",
     "The Identity of Satoshi Nakamoto",
     "The Tragic Life of Garrincha",
-    "The Calciopoli Wiretaps and Luciano Moggi's Shadow Network"
+    "The Calciopoli Wiretaps and Luciano Moggi's Shadow Network",
+    "Jobe Bellingham's Escape From Jude's Shadow"
   ],
   "published": [
     {
@@ -214,6 +215,15 @@
       "job": "run-42376072590",
       "topic": "The Calciopoli Wiretaps and Luciano Moggi's Shadow Network",
       "format": "mystery",
+      "links": {
+        "en": {},
+        "es": {}
+      }
+    },
+    {
+      "job": "run-42485762990",
+      "topic": "Jobe Bellingham's Escape From Jude's Shadow",
+      "format": "trending_person",
       "links": {
         "en": {},
         "es": {}
