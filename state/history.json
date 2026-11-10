@@ -23,7 +23,8 @@
     "The Tragic Life of Garrincha",
     "The Calciopoli Wiretaps and Luciano Moggi's Shadow Network",
     "Jobe Bellingham's Escape From Jude's Shadow",
-    "The Roberto Rojas Razor Blade Scandal (El Bengalazo)"
+    "The Roberto Rojas Razor Blade Scandal (El Bengalazo)",
+    "Jensen Huang's AI Prophecy"
   ],
   "published": [
     {
@@ -234,6 +235,15 @@
       "job": "run-42520754015",
       "topic": "The Roberto Rojas Razor Blade Scandal (El Bengalazo)",
       "format": "mystery",
+      "links": {
+        "en": {},
+        "es": {}
+      }
+    },
+    {
+      "job": "run-42908830985",
+      "topic": "Jensen Huang's AI Prophecy",
+      "format": "trending_person",
       "links": {
         "en": {},
         "es": {}
