@@ -24,7 +24,8 @@
     "The Calciopoli Wiretaps and Luciano Moggi's Shadow Network",
     "Jobe Bellingham's Escape From Jude's Shadow",
     "The Roberto Rojas Razor Blade Scandal (El Bengalazo)",
-    "Jensen Huang's AI Prophecy"
+    "Jensen Huang's AI Prophecy",
+    "The Disappearance of the Jules Rimet Trophy"
   ],
   "published": [
     {
@@ -244,6 +245,15 @@
       "job": "run-42908830985",
       "topic": "Jensen Huang's AI Prophecy",
       "format": "trending_person",
+      "links": {
+        "en": {},
+        "es": {}
+      }
+    },
+    {
+      "job": "run-43039358699",
+      "topic": "The Disappearance of the Jules Rimet Trophy",
+      "format": "mystery",
       "links": {
         "en": {},
         "es": {}
