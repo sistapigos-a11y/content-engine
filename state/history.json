@@ -26,7 +26,8 @@
     "The Roberto Rojas Razor Blade Scandal (El Bengalazo)",
     "Jensen Huang's AI Prophecy",
     "The Disappearance of the Jules Rimet Trophy",
-    "The Barbados vs Grenada 1994 Own Goal"
+    "The Barbados vs Grenada 1994 Own Goal",
+    "Kaviya Maran"
   ],
   "published": [
     {
@@ -264,6 +265,15 @@
       "job": "run-43114549430",
       "topic": "The Barbados vs Grenada 1994 Own Goal",
       "format": "mystery",
+      "links": {
+        "en": {},
+        "es": {}
+      }
+    },
+    {
+      "job": "run-43318488995",
+      "topic": "Kaviya Maran",
+      "format": "trending_person",
       "links": {
         "en": {},
         "es": {}
