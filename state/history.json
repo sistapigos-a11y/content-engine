@@ -25,7 +25,8 @@
     "Jobe Bellingham's Escape From Jude's Shadow",
     "The Roberto Rojas Razor Blade Scandal (El Bengalazo)",
     "Jensen Huang's AI Prophecy",
-    "The Disappearance of the Jules Rimet Trophy"
+    "The Disappearance of the Jules Rimet Trophy",
+    "The Barbados vs Grenada 1994 Own Goal"
   ],
   "published": [
     {
@@ -253,6 +254,15 @@
     {
       "job": "run-43039358699",
       "topic": "The Disappearance of the Jules Rimet Trophy",
+      "format": "mystery",
+      "links": {
+        "en": {},
+        "es": {}
+      }
+    },
+    {
+      "job": "run-43114549430",
+      "topic": "The Barbados vs Grenada 1994 Own Goal",
       "format": "mystery",
       "links": {
         "en": {},
