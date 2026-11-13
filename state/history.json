@@ -27,7 +27,8 @@
     "Jensen Huang's AI Prophecy",
     "The Disappearance of the Jules Rimet Trophy",
     "The Barbados vs Grenada 1994 Own Goal",
-    "Kaviya Maran"
+    "Kaviya Maran",
+    "The Fall of the Trillion Dollar Man"
   ],
   "published": [
     {
@@ -273,6 +274,15 @@
     {
       "job": "run-43318488995",
       "topic": "Kaviya Maran",
+      "format": "trending_person",
+      "links": {
+        "en": {},
+        "es": {}
+      }
+    },
+    {
+      "job": "run-43515587833",
+      "topic": "The Fall of the Trillion Dollar Man",
       "format": "trending_person",
       "links": {
         "en": {},
