@@ -28,7 +28,8 @@
     "The Disappearance of the Jules Rimet Trophy",
     "The Barbados vs Grenada 1994 Own Goal",
     "Kaviya Maran",
-    "The Fall of the Trillion Dollar Man"
+    "The Fall of the Trillion Dollar Man",
+    "Lisa Su"
   ],
   "published": [
     {
@@ -283,6 +284,15 @@
     {
       "job": "run-43515587833",
       "topic": "The Fall of the Trillion Dollar Man",
+      "format": "trending_person",
+      "links": {
+        "en": {},
+        "es": {}
+      }
+    },
+    {
+      "job": "run-43600822575",
+      "topic": "Lisa Su",
       "format": "trending_person",
       "links": {
         "en": {},
