@@ -29,7 +29,8 @@
     "The Barbados vs Grenada 1994 Own Goal",
     "Kaviya Maran",
     "The Fall of the Trillion Dollar Man",
-    "Lisa Su"
+    "Lisa Su",
+    "Jeremiah Smith's Record-Breaking Arrival"
   ],
   "published": [
     {
@@ -293,6 +294,15 @@
     {
       "job": "run-43600822575",
       "topic": "Lisa Su",
+      "format": "trending_person",
+      "links": {
+        "en": {},
+        "es": {}
+      }
+    },
+    {
+      "job": "run-43639325720",
+      "topic": "Jeremiah Smith's Record-Breaking Arrival",
       "format": "trending_person",
       "links": {
         "en": {},
