@@ -30,7 +30,8 @@
     "Kaviya Maran",
     "The Fall of the Trillion Dollar Man",
     "Lisa Su",
-    "Jeremiah Smith's Record-Breaking Arrival"
+    "Jeremiah Smith's Record-Breaking Arrival",
+    "Alexander Zverev's Comeback from Rock Bottom"
   ],
   "published": [
     {
@@ -303,6 +304,15 @@
     {
       "job": "run-43639325720",
       "topic": "Jeremiah Smith's Record-Breaking Arrival",
+      "format": "trending_person",
+      "links": {
+        "en": {},
+        "es": {}
+      }
+    },
+    {
+      "job": "run-43722296780",
+      "topic": "Alexander Zverev's Comeback from Rock Bottom",
       "format": "trending_person",
       "links": {
         "en": {},
