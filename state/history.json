@@ -32,7 +32,8 @@
     "Lisa Su",
     "Jeremiah Smith's Record-Breaking Arrival",
     "Alexander Zverev's Comeback from Rock Bottom",
-    "Mirra Andreeva's Unstoppable Breakthrough"
+    "Mirra Andreeva's Unstoppable Breakthrough",
+    "The Actor Who Weaponized Hollywood's Disrespect"
   ],
   "published": [
     {
@@ -323,6 +324,15 @@
     {
       "job": "run-43761706578",
       "topic": "Mirra Andreeva's Unstoppable Breakthrough",
+      "format": "trending_person",
+      "links": {
+        "en": {},
+        "es": {}
+      }
+    },
+    {
+      "job": "run-44122983050",
+      "topic": "The Actor Who Weaponized Hollywood's Disrespect",
       "format": "trending_person",
       "links": {
         "en": {},
