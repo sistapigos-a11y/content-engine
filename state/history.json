@@ -33,7 +33,8 @@
     "Jeremiah Smith's Record-Breaking Arrival",
     "Alexander Zverev's Comeback from Rock Bottom",
     "Mirra Andreeva's Unstoppable Breakthrough",
-    "The Actor Who Weaponized Hollywood's Disrespect"
+    "The Actor Who Weaponized Hollywood's Disrespect",
+    "Amon-Ra St. Brown's Revenge List"
   ],
   "published": [
     {
@@ -333,6 +334,15 @@
     {
       "job": "run-44122983050",
       "topic": "The Actor Who Weaponized Hollywood's Disrespect",
+      "format": "trending_person",
+      "links": {
+        "en": {},
+        "es": {}
+      }
+    },
+    {
+      "job": "run-44200376329",
+      "topic": "Amon-Ra St. Brown's Revenge List",
       "format": "trending_person",
       "links": {
         "en": {},
