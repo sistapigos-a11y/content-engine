@@ -34,7 +34,8 @@
     "Alexander Zverev's Comeback from Rock Bottom",
     "Mirra Andreeva's Unstoppable Breakthrough",
     "The Actor Who Weaponized Hollywood's Disrespect",
-    "Amon-Ra St. Brown's Revenge List"
+    "Amon-Ra St. Brown's Revenge List",
+    "The Revenge of Nico Paz"
   ],
   "published": [
     {
@@ -343,6 +344,15 @@
     {
       "job": "run-44200376329",
       "topic": "Amon-Ra St. Brown's Revenge List",
+      "format": "trending_person",
+      "links": {
+        "en": {},
+        "es": {}
+      }
+    },
+    {
+      "job": "run-44634611459",
+      "topic": "The Revenge of Nico Paz",
       "format": "trending_person",
       "links": {
         "en": {},
