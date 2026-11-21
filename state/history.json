@@ -36,7 +36,8 @@
     "The Actor Who Weaponized Hollywood's Disrespect",
     "Amon-Ra St. Brown's Revenge List",
     "The Revenge of Nico Paz",
-    "Sam Houser"
+    "Sam Houser",
+    "Jamal Musiala's Decision That Haunted English Football"
   ],
   "published": [
     {
@@ -363,6 +364,15 @@
     {
       "job": "run-44831060178",
       "topic": "Sam Houser",
+      "format": "trending_person",
+      "links": {
+        "en": {},
+        "es": {}
+      }
+    },
+    {
+      "job": "run-44915657052",
+      "topic": "Jamal Musiala's Decision That Haunted English Football",
       "format": "trending_person",
       "links": {
         "en": {},
