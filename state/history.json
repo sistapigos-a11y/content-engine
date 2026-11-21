@@ -35,7 +35,8 @@
     "Mirra Andreeva's Unstoppable Breakthrough",
     "The Actor Who Weaponized Hollywood's Disrespect",
     "Amon-Ra St. Brown's Revenge List",
-    "The Revenge of Nico Paz"
+    "The Revenge of Nico Paz",
+    "Sam Houser"
   ],
   "published": [
     {
@@ -353,6 +354,15 @@
     {
       "job": "run-44634611459",
       "topic": "The Revenge of Nico Paz",
+      "format": "trending_person",
+      "links": {
+        "en": {},
+        "es": {}
+      }
+    },
+    {
+      "job": "run-44831060178",
+      "topic": "Sam Houser",
       "format": "trending_person",
       "links": {
         "en": {},
